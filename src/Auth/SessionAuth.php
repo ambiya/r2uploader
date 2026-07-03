@@ -89,7 +89,7 @@ class SessionAuth
         $this->requireAuth();
         if (!$this->hasRole($role)) {
             header('HTTP/1.0 403 Forbidden');
-            echo "Akses ditolak. Membutuhkan hak akses: $role";
+            echo htmlspecialchars("Akses ditolak. Membutuhkan hak akses: $role", ENT_QUOTES, 'UTF-8');
             exit;
         }
     }

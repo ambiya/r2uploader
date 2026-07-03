@@ -16,6 +16,31 @@ class LanguageController extends BaseController
         }
 
         $referer = $_SERVER['HTTP_REFERER'] ?? '/';
+        // Validate referer to prevent open redirect
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+
+        $parsedUrl = parse_url($referer);
+        if ($referer !== '/') {
+             if (isset($parsedUrl['host'])) {
+                 $refererHost = $parsedUrl['host'];
+                 if (isset($parsedUrl['port'])) {
+                     $refererHost .= ':' . $parsedUrl['port'];
+                 }
+                 if ($refererHost !== $host) {
+                     $referer = '/';
+                 }
+             } elseif (isset($parsedUrl['path']) && str_starts_with($parsedUrl['path'], '//')) {
+                 $referer = '/';
+             } elseif (isset($parsedUrl['path']) && str_starts_with($parsedUrl['path'], '\\')) {
+                 $referer = '/';
+             }
+        }
+
+        // Also prevent javascript/data schemes
+        $scheme = parse_url($referer, PHP_URL_SCHEME);
+        if (in_array(strtolower((string)$scheme), ['javascript', 'data', 'vbscript'], true)) {
+            $referer = '/';
+        }
         return $this->redirect($referer);
     }
 }

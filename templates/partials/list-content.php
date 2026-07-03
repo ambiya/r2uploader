@@ -21,7 +21,7 @@
   <span style="font-weight: 500; display: flex; align-items: center; gap: 0.25rem;">
     📦 <?= __('choose_bucket') ?>
   </span>
-  <select onchange="window.location.href='?action=list&type='+this.value" style="width:auto; padding:0.25rem 0.65rem; border-radius:6px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); font-size:0.85rem; font-weight:normal; cursor:pointer; outline:none; transition:var(--transition);">
+  <select onchange="window.location.href='?action=list&type='+encodeURIComponent(this.value)" style="width:auto; padding:0.25rem 0.65rem; border-radius:6px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); font-size:0.85rem; font-weight:normal; cursor:pointer; outline:none; transition:var(--transition);">
     <?php if (isset($buckets) && is_array($buckets)): ?>
       <?php foreach ($buckets as $key => $b): ?>
         <option value="<?= htmlspecialchars((string)$key) ?>" <?= $key === $type ? 'selected' : '' ?>>

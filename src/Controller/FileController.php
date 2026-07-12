@@ -34,6 +34,66 @@ class FileController extends BaseController
         $this->logger         = $logger;
     }
 
+    private function getFilteredAndSortedObjects(string $bucketName, string $prefix, string $search, bool $flat, string $sort, string $order, int $page, int $limit): array
+    {
+        if ($search !== '' || $flat) {
+            $allObjects = $this->r2->listAllObjects($bucketName, $prefix);
+            if ($search !== '') {
+                $allObjects = array_values(array_filter($allObjects, function($obj) use ($search) {
+                    return stripos($obj['Key'], $search) !== false;
+                }));
+            }
+            
+            $this->sortObjects($allObjects, $sort, $order);
+            
+            $offset = ($page - 1) * $limit;
+            $sliced = array_slice($allObjects, $offset, $limit);
+            
+            return [
+                'objects' => $sliced,
+                'prefixes' => [],
+                'isTruncated' => ($offset + $limit) < count($allObjects),
+                'nextToken' => null,
+            ];
+        } else {
+            $allLevel = $this->r2->listAllInDirectory($bucketName, $prefix);
+            $this->sortObjects($allLevel['objects'], $sort, $order);
+            
+            $offset = ($page - 1) * $limit;
+            $slicedObjects = array_slice($allLevel['objects'], $offset, $limit);
+            $slicedPrefixes = array_slice($allLevel['prefixes'], $offset, $limit);
+            
+            return [
+                'objects' => $slicedObjects,
+                'prefixes' => $slicedPrefixes,
+                'isTruncated' => (($offset + $limit) < count($allLevel['objects'])) || (($offset + $limit) < count($allLevel['prefixes'])),
+                'nextToken' => null,
+            ];
+        }
+    }
+
+    private function sortObjects(array &$objects, string $sort, string $order): void
+    {
+        usort($objects, function($a, $b) use ($sort, $order) {
+            if ($sort === 'date') {
+                $valA = isset($a['LastModified']) ? $a['LastModified']->getTimestamp() : 0;
+                $valB = isset($b['LastModified']) ? $b['LastModified']->getTimestamp() : 0;
+            } elseif ($sort === 'size') {
+                $valA = $a['Size'] ?? 0;
+                $valB = $b['Size'] ?? 0;
+            } else {
+                $valA = strtolower($a['Key']);
+                $valB = strtolower($b['Key']);
+                if ($order === 'asc') return strcmp($valA, $valB);
+                if ($order === 'desc') return strcmp($valB, $valA);
+            }
+            
+            if ($valA == $valB) return 0;
+            if ($order === 'asc') return $valA > $valB ? 1 : -1;
+            return $valA < $valB ? 1 : -1;
+        });
+    }
+
     /**
      * List files in a bucket with prefix support.
      * GET /?action=list&type=...&prefix=...
@@ -44,6 +104,9 @@ class FileController extends BaseController
         $prefix = (string) $request->query('prefix', '');
         $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
+        $flat   = $request->query('flat') === '1';
+        $sort   = (string) $request->query('sort', 'name');
+        $order  = (string) $request->query('order', 'asc');
 
         $buckets = $this->bucketResolver->all();
         if (empty($type) && !empty($buckets)) {
@@ -66,29 +129,7 @@ class FileController extends BaseController
         }
         $prefix = ltrim($prefix, '/');
 
-        if ($search !== '') {
-            $allObjects = $this->r2->listAllObjects($bucket['name'], $prefix);
-            $filteredObjects = array_values(array_filter($allObjects, function($obj) use ($search) {
-                return stripos($obj['Key'], $search) !== false;
-            }));
-            $result = [
-                'objects' => $filteredObjects,
-                'prefixes' => [],
-                'isTruncated' => false,
-                'nextToken' => null,
-            ];
-        } else {
-            $allLevel = $this->r2->listAllInDirectory($bucket['name'], $prefix);
-            $limit = 25;
-            $slicedObjects = array_slice($allLevel['objects'], 0, $limit);
-            $slicedPrefixes = array_slice($allLevel['prefixes'], 0, $limit);
-            $result = [
-                'objects' => $slicedObjects,
-                'prefixes' => $slicedPrefixes,
-                'isTruncated' => count($allLevel['objects']) > $limit || count($allLevel['prefixes']) > $limit,
-                'nextToken' => null,
-            ];
-        }
+        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, 1, 25);
 
         $viewData = new ListViewData(
             $this->csrf->getToken(),
@@ -115,6 +156,9 @@ class FileController extends BaseController
         $prefix = (string) $request->query('prefix', '');
         $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
+        $flat   = $request->query('flat') === '1';
+        $sort   = (string) $request->query('sort', 'name');
+        $order  = (string) $request->query('order', 'asc');
         $limit  = (int) $request->query('limit', 25);
         if ($limit < 1 || $limit > 1000) $limit = 25;
         $page   = (int) $request->query('page', 1);
@@ -140,34 +184,7 @@ class FileController extends BaseController
         }
         $prefix = ltrim($prefix, '/');
 
-        if ($search !== '') {
-            $allObjects = $this->r2->listAllObjects($bucket['name'], $prefix);
-            $filteredObjects = array_values(array_filter($allObjects, function($obj) use ($search) {
-                return stripos($obj['Key'], $search) !== false;
-            }));
-            
-            // In-memory pagination for search
-            $offset = ($page - 1) * $limit;
-            $sliced = array_slice($filteredObjects, $offset, $limit);
-            
-            $result = [
-                'objects' => $sliced,
-                'prefixes' => [],
-                'isTruncated' => ($offset + $limit) < count($filteredObjects),
-                'nextToken' => null, // We use 'page' instead of nextToken for search
-            ];
-        } else {
-            $allLevel = $this->r2->listAllInDirectory($bucket['name'], $prefix);
-            $offset = ($page - 1) * $limit;
-            $slicedObjects = array_slice($allLevel['objects'], $offset, $limit);
-            $slicedPrefixes = array_slice($allLevel['prefixes'], $offset, $limit);
-            $result = [
-                'objects' => $slicedObjects,
-                'prefixes' => $slicedPrefixes,
-                'isTruncated' => (($offset + $limit) < count($allLevel['objects'])) || (($offset + $limit) < count($allLevel['prefixes'])),
-                'nextToken' => null,
-            ];
-        }
+        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, $page, $limit);
 
         // Format size and append publicUrl
         $formattedObjects = [];

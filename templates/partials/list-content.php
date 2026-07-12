@@ -53,9 +53,14 @@
     <?php endif; ?>
   </div>
 
-  <!-- Search bar -->
-  <div class="form-group" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; max-width:100%;">
-    <input type="text" id="file-search-input" placeholder="<?= __('search_placeholder') ?>" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" style="flex:1; max-width: 400px;">
+  <!-- Search & Filter bar -->
+  <div class="form-group" style="margin-bottom:1.5rem; display:flex; gap:0.5rem; max-width:100%; flex-wrap:wrap; align-items:center;">
+    <input type="text" id="file-search-input" placeholder="<?= __('search_placeholder') ?>" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>" style="flex:1; min-width: 200px; max-width: 400px;">
+    
+    <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.85rem; cursor:pointer;">
+      <input type="checkbox" id="flat-view-checkbox" style="width:auto;">
+      Flat View (No Folders)
+    </label>
   </div>
 
   <!-- Folders Container -->
@@ -71,8 +76,15 @@
     <table id="file-table">
       <thead>
         <tr>
-          <th><?= __('file_name') ?></th>
-          <th><?= __('size') ?></th>
+          <th class="sortable-header" data-sort="name" style="cursor:pointer; user-select:none;">
+            <?= __('file_name') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
+          </th>
+          <th class="sortable-header" data-sort="date" style="cursor:pointer; user-select:none;">
+            <?= __('upload_date') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
+          </th>
+          <th class="sortable-header" data-sort="size" style="cursor:pointer; user-select:none;">
+            <?= __('size') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
+          </th>
           <th style="text-align:right;"><?= __('action') ?></th>
         </tr>
       </thead>

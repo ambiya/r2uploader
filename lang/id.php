@@ -157,6 +157,7 @@ return [
     'files' => 'Files',
     'per_page' => 'Per halaman:',
     'file_name' => 'Nama File',
+    'upload_date' => 'Tanggal Upload',
     'size' => 'Ukuran',
     'btn_preview' => 'Preview',
     'btn_download' => 'Download',

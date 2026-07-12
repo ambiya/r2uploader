@@ -59,6 +59,8 @@
         const pageIndicator = document.getElementById('page-indicator');
         const perPageSelect = document.getElementById('per-page-select');
         const searchInput = document.getElementById('file-search-input');
+        const flatViewCheckbox = document.getElementById('flat-view-checkbox');
+        const sortableHeaders = document.querySelectorAll('.sortable-header');
 
         const STORAGE_KEY = 'r2mgr_per_page';
         let limit = parseInt(localStorage.getItem(STORAGE_KEY) || '25', 10);
@@ -75,6 +77,29 @@
         const urlParams = new URLSearchParams(window.location.search);
         const typeParam = urlParams.get('type') || '';
         const prefixParam = urlParams.get('prefix') || '';
+        
+        let currentSort = urlParams.get('sort') || localStorage.getItem('r2mgr_sort') || 'name';
+        let currentOrder = urlParams.get('order') || localStorage.getItem('r2mgr_order') || 'asc';
+        let currentFlat = urlParams.get('flat') === '1' || localStorage.getItem('r2mgr_flat') === '1';
+
+        if (flatViewCheckbox) flatViewCheckbox.checked = currentFlat;
+
+        function updateSortIndicators() {
+            sortableHeaders.forEach(th => {
+                const indicator = th.querySelector('.sort-indicator');
+                if (!indicator) return;
+                
+                if (th.dataset.sort === currentSort) {
+                    indicator.textContent = currentOrder === 'asc' ? '▲' : '▼';
+                    indicator.style.color = 'var(--accent)';
+                } else {
+                    indicator.textContent = '';
+                }
+            });
+        }
+        
+        // Initial setup for indicators
+        updateSortIndicators();
 
         function renderFileRow(obj, publicUrl, type) {
             const fileUrl = publicUrl.replace(/\/$/, '') + '/' + obj.Key.replace(/^\//, '');
@@ -82,6 +107,8 @@
             
             const tr = document.createElement('tr');
             tr.className = 'file-row';
+            
+            const dateStr = obj.LastModified ? new Date(obj.LastModified).toLocaleString() : '-';
             
             tr.innerHTML = `
               <td>
@@ -92,6 +119,7 @@
                   <a href="${escapeHtml(fileUrl)}" class="file-link" target="_blank" style="word-break:break-all;">${escapeHtml(displayName)}</a>
                 </div>
               </td>
+              <td><span style="color:var(--text-muted); font-size:0.85rem;">${escapeHtml(dateStr)}</span></td>
               <td><span class="badge" style="background-color:var(--bg-app); border:1px solid var(--border); color:var(--text-muted);">${escapeHtml(obj.SizeMB)} MB</span></td>
               <td>
                 <div class="actions-cell" style="justify-content:flex-end;">
@@ -167,6 +195,10 @@
             apiUrl.searchParams.set('prefix', prefixParam);
             apiUrl.searchParams.set('limit', limit);
             apiUrl.searchParams.set('page', currentPageIndex + 1);
+            
+            if (currentSort !== 'name') apiUrl.searchParams.set('sort', currentSort);
+            if (currentOrder !== 'asc') apiUrl.searchParams.set('order', currentOrder);
+            if (currentFlat) apiUrl.searchParams.set('flat', '1');
             
             if (currentSearch) {
                 apiUrl.searchParams.set('q', currentSearch);
@@ -261,6 +293,47 @@
                 fetchPage();
             });
         }
+        
+        function updateUrlAndFetch() {
+            const url = new URL(window.location.href);
+            if (currentSearch) url.searchParams.set('q', currentSearch); else url.searchParams.delete('q');
+            if (currentSort !== 'name') url.searchParams.set('sort', currentSort); else url.searchParams.delete('sort');
+            if (currentOrder !== 'asc') url.searchParams.set('order', currentOrder); else url.searchParams.delete('order');
+            if (currentFlat) url.searchParams.set('flat', '1'); else url.searchParams.delete('flat');
+            window.history.replaceState({}, '', url);
+            updateSortIndicators();
+            fetchPage();
+        }
+
+        sortableHeaders.forEach(th => {
+            th.addEventListener('click', () => {
+                const sortKey = th.dataset.sort;
+                if (currentSort === sortKey) {
+                    // Toggle order
+                    currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // Change sort column, default to asc
+                    currentSort = sortKey;
+                    currentOrder = 'asc';
+                }
+                
+                localStorage.setItem('r2mgr_sort', currentSort);
+                localStorage.setItem('r2mgr_order', currentOrder);
+                currentPageIndex = 0;
+                historyTokens = [null];
+                updateUrlAndFetch();
+            });
+        });
+
+        if (flatViewCheckbox) {
+            flatViewCheckbox.addEventListener('change', (e) => {
+                currentFlat = e.target.checked;
+                localStorage.setItem('r2mgr_flat', currentFlat ? '1' : '0');
+                currentPageIndex = 0;
+                historyTokens = [null];
+                updateUrlAndFetch();
+            });
+        }
 
         // Search (Debounce)
         if (searchInput) {
@@ -285,14 +358,7 @@
                     currentSearch = val;
                     currentPageIndex = 0;
                     historyTokens = [null];
-                    
-                    // Update URL silently
-                    const url = new URL(window.location.href);
-                    if (currentSearch) url.searchParams.set('q', currentSearch);
-                    else url.searchParams.delete('q');
-                    window.history.replaceState({}, '', url);
-
-                    fetchPage();
+                    updateUrlAndFetch();
                 }
             }
         }

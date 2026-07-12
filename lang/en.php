@@ -157,6 +157,7 @@ return [
     'files' => 'Files',
     'per_page' => 'Per page:',
     'file_name' => 'File Name',
+    'upload_date' => 'Upload Date',
     'size' => 'Size',
     'btn_preview' => 'Preview',
     'btn_download' => 'Download',

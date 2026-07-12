@@ -145,6 +145,7 @@ return [
     'err_upload_unknown' => 'Error upload tidak diketahui (code: :code).',
     'err_upload_file_failed' => 'Gagal upload file :filename: :msg',
     'err_invalid_uploaded_file' => 'Gagal upload file :filename: Bukan file upload yang valid.',
+    'err_mime_mismatch' => 'Tipe MIME file tidak sesuai dengan ekspektasi kategori ekstensi :ext.',
     'err_extension_not_allowed' => 'Ekstensi file \':ext\' tidak diizinkan. Ekstensi yang diizinkan: :allowed',
 
     // List Content / File Manager

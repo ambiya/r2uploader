@@ -94,19 +94,10 @@ class FileController extends BaseController
         });
     }
 
-    /**
-     * List files in a bucket with prefix support.
-     * GET /?action=list&type=...&prefix=...
-     */
-    public function list(Request $request): Response
+    private function resolveBucketAndPrefix(Request $request): array|string
     {
         $type   = $request->query('type');
         $prefix = (string) $request->query('prefix', '');
-        $ct     = $request->query('ct');
-        $search = (string) $request->query('q', '');
-        $flat   = $request->query('flat') === '1';
-        $sort   = (string) $request->query('sort', 'name');
-        $order  = (string) $request->query('order', 'asc');
 
         $buckets = $this->bucketResolver->all();
         if (empty($type) && !empty($buckets)) {
@@ -116,18 +107,49 @@ class FileController extends BaseController
         $bucket = $this->bucketResolver->resolve($type);
 
         if (!$this->r2 || empty($buckets)) {
-            throw HttpException::badRequest(__('err_r2_not_configured'));
+            return 'err_r2_not_configured';
         }
 
         if (!$bucket || empty($bucket['name'])) {
-            throw HttpException::notFound(__('err_bucket_not_found'));
+            return 'err_bucket_not_found';
         }
 
-        // Handle path traversal attempts
         if (str_contains($prefix, '..')) {
-            throw HttpException::badRequest(__('err_path_traversal'));
+            return 'err_path_traversal';
         }
-        $prefix = ltrim($prefix, '/');
+
+        return [
+            'type'    => $type,
+            'prefix'  => ltrim($prefix, '/'),
+            'bucket'  => $bucket,
+            'buckets' => $buckets
+        ];
+    }
+
+    /**
+     * List files in a bucket with prefix support.
+     * GET /?action=list&type=...&prefix=...
+     */
+    public function list(Request $request): Response
+    {
+        $resultData = $this->resolveBucketAndPrefix($request);
+        if (is_string($resultData)) {
+            if ($resultData === 'err_bucket_not_found') {
+                throw HttpException::notFound(__($resultData));
+            }
+            throw HttpException::badRequest(__($resultData));
+        }
+
+        $type    = $resultData['type'];
+        $prefix  = $resultData['prefix'];
+        $bucket  = $resultData['bucket'];
+        $buckets = $resultData['buckets'];
+
+        $ct     = $request->query('ct');
+        $search = (string) $request->query('q', '');
+        $flat   = $request->query('flat') === '1';
+        $sort   = (string) $request->query('sort', 'name');
+        $order  = (string) $request->query('order', 'asc');
 
         $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, 1, 25);
 
@@ -152,8 +174,16 @@ class FileController extends BaseController
      */
     public function apiList(Request $request): Response
     {
-        $type   = $request->query('type');
-        $prefix = (string) $request->query('prefix', '');
+        $resultData = $this->resolveBucketAndPrefix($request);
+        if (is_string($resultData)) {
+            $status = ($resultData === 'err_bucket_not_found') ? 404 : 400;
+            return Response::json(['error' => __($resultData)], $status);
+        }
+
+        $type    = $resultData['type'];
+        $prefix  = $resultData['prefix'];
+        $bucket  = $resultData['bucket'];
+
         $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
         $flat   = $request->query('flat') === '1';
@@ -163,26 +193,6 @@ class FileController extends BaseController
         if ($limit < 1 || $limit > 1000) $limit = 25;
         $page   = (int) $request->query('page', 1);
         if ($page < 1) $page = 1;
-
-        $buckets = $this->bucketResolver->all();
-        if (empty($type) && !empty($buckets)) {
-            $type = $this->bucketResolver->firstType();
-        }
-
-        $bucket = $this->bucketResolver->resolve($type);
-
-        if (!$this->r2 || empty($buckets)) {
-            return Response::json(['error' => __('err_r2_not_configured')], 400);
-        }
-
-        if (!$bucket || empty($bucket['name'])) {
-            return Response::json(['error' => __('err_bucket_not_found')], 404);
-        }
-
-        if (str_contains($prefix, '..')) {
-            return Response::json(['error' => __('err_path_traversal')], 400);
-        }
-        $prefix = ltrim($prefix, '/');
 
         $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, $page, $limit);
 

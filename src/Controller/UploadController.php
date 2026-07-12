@@ -177,7 +177,7 @@ class UploadController extends BaseController
 
         $fileName = FileHelper::sanitizeFilename($fileName);
         $fileName = FileHelper::ensureExtension($fileName, $result['originalName']);
-        $this->validateExtension($fileName);
+        $this->validateExtension($fileName, $result['contentType']);
 
         return [[
             'fileName'    => $fileName,
@@ -238,10 +238,6 @@ class UploadController extends BaseController
             // Apply custom filename only if single file uploaded, otherwise keep original
             $fileName = ($fileCount === 1 && !empty($customFilename)) ? $customFilename : $originalName;
 
-            $fileName = FileHelper::sanitizeFilename($fileName);
-            $fileName = FileHelper::ensureExtension($fileName, $originalName);
-            $this->validateExtension($fileName);
-
             $tmpPath = $files['tmp_name'][$i];
             if (!is_uploaded_file($tmpPath)) {
                 throw new \RuntimeException(__('err_invalid_uploaded_file', ['filename' => $files['name'][$i]]));
@@ -249,6 +245,10 @@ class UploadController extends BaseController
 
             // Server-side MIME validation
             $contentType = mime_content_type($tmpPath) ?: 'application/octet-stream';
+
+            $fileName = FileHelper::sanitizeFilename($fileName);
+            $fileName = FileHelper::ensureExtension($fileName, $originalName);
+            $this->validateExtension($fileName, $contentType);
 
             $uploadedFiles[] = [
                 'fileName'    => $fileName,
@@ -262,20 +262,30 @@ class UploadController extends BaseController
     }
 
     /**
-     * Validate file extension against whitelist.
+     * Validate file extension against whitelist and check basic MIME category.
      *
-     * @throws \RuntimeException If extension is not allowed
+     * @throws \RuntimeException If extension is not allowed or MIME mismatches
      */
-    private function validateExtension(string $fileName): void
+    private function validateExtension(string $fileName, string $contentType): void
     {
         $allowed = $this->config['allowedExtensions'] ?? [];
-        if (empty($allowed)) {
-            return; // No restrictions
+        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if (!empty($allowed)) {
+            if (!in_array($ext, $allowed, true)) {
+                throw new \RuntimeException(__('err_extension_not_allowed', ['ext' => $ext, 'allowed' => implode(', ', $allowed)]));
+            }
         }
 
-        $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowed, true)) {
-            throw new \RuntimeException(__('err_extension_not_allowed', ['ext' => $ext, 'allowed' => implode(', ', $allowed)]));
+        $expectedCategory = FileHelper::getMimeCategory($fileName);
+        if ($expectedCategory === 'image' && !str_starts_with($contentType, 'image/')) {
+            throw new \RuntimeException(__('err_mime_mismatch', ['ext' => $ext]));
+        }
+        if ($expectedCategory === 'video' && !str_starts_with($contentType, 'video/')) {
+            throw new \RuntimeException(__('err_mime_mismatch', ['ext' => $ext]));
+        }
+        if ($expectedCategory === 'audio' && !str_starts_with($contentType, 'audio/')) {
+            throw new \RuntimeException(__('err_mime_mismatch', ['ext' => $ext]));
         }
     }
 }

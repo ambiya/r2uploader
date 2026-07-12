@@ -44,13 +44,15 @@ class UserManager
         ");
     }
 
-    public function migrateFromEnv(string $envUser, string $envPass): void
+    public function migrateFromEnv(string $envUser, string $envPass): bool
     {
-        // Only migrate if no users exist
         $stmt = $this->db->query("SELECT COUNT(*) FROM users");
-        if ((int) $stmt->fetchColumn() === 0 && $envUser !== '' && $envPass !== '') {
-            $this->createUser($envUser, $envPass, 'admin');
+        if ((int) $stmt->fetchColumn() === 0) {
+            if ($envUser !== '' && $envPass !== '') {
+                $this->createUser($envUser, $envPass, 'admin');
+            }
         }
+        return true;
     }
 
     public function createUser(string $username, string $password, string $role = 'editor'): int

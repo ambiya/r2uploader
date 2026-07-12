@@ -145,6 +145,7 @@ return [
     'err_upload_unknown' => 'Unknown upload error (code: :code).',
     'err_upload_file_failed' => 'Failed to upload file :filename: :msg',
     'err_invalid_uploaded_file' => 'Failed to upload file :filename: Not a valid uploaded file.',
+    'err_mime_mismatch' => 'File MIME type does not match the expected category for extension :ext.',
     'err_extension_not_allowed' => 'File extension \':ext\' is not allowed. Allowed extensions: :allowed',
 
     // List Content / File Manager

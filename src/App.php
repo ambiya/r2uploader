@@ -243,11 +243,18 @@ class App
      */
     private function migrateEnvAdmin(): void
     {
+        $lockFile = dirname(__DIR__) . '/data/.admin_migrated';
+        if (file_exists($lockFile)) {
+            return;
+        }
+
         $config = $this->container->get('config');
-        $envUser = $config['auth']['user'];
-        $envPass = $config['auth']['pass'];
-        if ($envUser && $envPass) {
-            $this->container->get('userManager')->migrateFromEnv($envUser, $envPass);
+        $envUser = $config['auth']['user'] ?? '';
+        $envPass = $config['auth']['pass'] ?? '';
+        
+        $migrated = $this->container->get('userManager')->migrateFromEnv($envUser, $envPass);
+        if ($migrated) {
+            touch($lockFile);
         }
     }
 

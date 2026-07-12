@@ -95,9 +95,6 @@
               <td><span class="badge" style="background-color:var(--bg-app); border:1px solid var(--border); color:var(--text-muted);">${escapeHtml(obj.SizeMB)} MB</span></td>
               <td>
                 <div class="actions-cell" style="justify-content:flex-end;">
-                  <button class="btn btn-secondary" onclick="previewFile('${escapeJs(fileUrl)}', '${escapeJs(displayName)}')" style="padding:0.4rem 0.65rem;" title="Preview">
-                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                  </button>
                   <button class="btn btn-secondary" onclick="copyToClipboard('${escapeJs(fileUrl)}')" style="padding:0.4rem 0.65rem;" title="Copy URL">
                     <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                   </button>
@@ -169,12 +166,10 @@
             apiUrl.searchParams.set('type', typeParam);
             apiUrl.searchParams.set('prefix', prefixParam);
             apiUrl.searchParams.set('limit', limit);
+            apiUrl.searchParams.set('page', currentPageIndex + 1);
             
             if (currentSearch) {
                 apiUrl.searchParams.set('q', currentSearch);
-                apiUrl.searchParams.set('page', currentPageIndex + 1); // Search uses page param
-            } else if (token) {
-                apiUrl.searchParams.set('ct', token);
             }
 
             fetch(apiUrl)
@@ -305,95 +300,6 @@
         // Initial fetch
         fetchPage();
     });
-
-    // --- Preview Modal ---
-    window.previewFile = function(url, filename) {
-        const modal = document.getElementById('preview-modal');
-        const title = document.getElementById('preview-title');
-        const container = document.getElementById('preview-container');
-        const dlBtn = document.getElementById('preview-download-btn');
-        
-        if (!modal || !container) return;
-        
-        title.textContent = filename;
-        dlBtn.href = url;
-        container.innerHTML = '<div class="spinner" style="border-color:var(--accent); border-right-color:transparent;"></div>';
-        modal.showModal();
-        
-        const ext = filename.split('.').pop().toLowerCase();
-        const images = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
-        const videos = ['mp4', 'webm', 'ogg'];
-        const audios = ['mp3', 'wav', 'ogg', 'aac'];
-        
-        const sanitizeHtml = (str) => {
-            const temp = document.createElement('div');
-            temp.textContent = str;
-            return temp.innerHTML;
-        };
-        const safeUrl = sanitizeHtml(url);
-        const safeExt = sanitizeHtml(ext);
-
-        if (images.includes(ext)) {
-            const img = new Image();
-            img.onload = () => {
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '60vh';
-                img.style.objectFit = 'contain';
-                container.innerHTML = '';
-                container.appendChild(img);
-            };
-            img.onerror = () => {
-                container.innerHTML = '<p style="color:var(--danger);">Gagal memuat gambar.</p>';
-            };
-            img.src = url;
-        } else if (videos.includes(ext)) {
-            container.innerHTML = `
-                <video controls style="max-width:100%; max-height:60vh;">
-                    <source src="${safeUrl}" type="video/${safeExt === 'mp4' ? 'mp4' : (safeExt === 'webm' ? 'webm' : 'ogg')}">
-                    Browser Anda tidak mendukung tag video.
-                </video>
-            `;
-        } else if (audios.includes(ext)) {
-            container.innerHTML = `
-                <audio controls style="width:100%;">
-                    <source src="${safeUrl}" type="audio/${safeExt === 'mp3' ? 'mpeg' : (safeExt === 'wav' ? 'wav' : 'ogg')}">
-                    Browser Anda tidak mendukung tag audio.
-                </audio>
-            `;
-        } else {
-            container.innerHTML = `
-                <div style="text-align:center; color:var(--text-muted);">
-                    <svg style="width:4rem;height:4rem; margin-bottom:1rem; opacity:0.5;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <p>Preview tidak tersedia untuk format file ini.</p>
-                </div>
-            `;
-        }
-    };
-    
-    window.closePreview = function() {
-        const modal = document.getElementById('preview-modal');
-        const container = document.getElementById('preview-container');
-        if (modal) {
-            modal.close();
-            if (container) container.innerHTML = ''; // Stop media playing
-        }
-    };
-
-    // Stop media playing when dialog is closed via Esc key or form button
-    const previewModal = document.getElementById('preview-modal');
-    if (previewModal) {
-        previewModal.addEventListener('close', function() {
-            const container = document.getElementById('preview-container');
-            if (container) container.innerHTML = '';
-        });
-        
-        // Light-dismiss by clicking on the backdrop
-        previewModal.addEventListener('click', function(event) {
-            if (event.target === previewModal) {
-                previewModal.close();
-            }
-        });
-    }
 
     const renameModal = document.getElementById('rename-modal');
     if (renameModal) {

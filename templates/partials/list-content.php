@@ -67,6 +67,21 @@
   <!-- Files Container -->
   <h3 id="file-title" style="display:none; font-size:0.85rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem; font-weight:600; letter-spacing:0.05em; margin-top:1.5rem;">📄 <?= __('files') ?></h3>
 
+  <div id="file-table-container" style="overflow-x:auto; display:none;">
+    <table id="file-table">
+      <thead>
+        <tr>
+          <th><?= __('file_name') ?></th>
+          <th><?= __('size') ?></th>
+          <th style="text-align:right;"><?= __('action') ?></th>
+        </tr>
+      </thead>
+      <tbody id="file-table-body">
+        <!-- Injected via JS -->
+      </tbody>
+    </table>
+  </div>
+
   <div class="pagination-bar" id="pagination-bar" style="display:none;">
     <div style="display: flex; gap: 0.5rem; align-items: center;" id="pagination-buttons">
       <button id="btn-prev-page" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" disabled>&laquo; Prev</button>
@@ -83,21 +98,6 @@
     </label>
   </div>
 
-  <div id="file-table-container" style="overflow-x:auto; display:none;">
-    <table id="file-table">
-      <thead>
-        <tr>
-          <th><?= __('file_name') ?></th>
-          <th><?= __('size') ?></th>
-          <th style="text-align:right;"><?= __('action') ?></th>
-        </tr>
-      </thead>
-      <tbody id="file-table-body">
-        <!-- Injected via JS -->
-      </tbody>
-    </table>
-  </div>
-
   <div id="loading-spinner" style="text-align:center; padding:3rem; color:var(--text-muted);">
       <svg style="width:2rem;height:2rem; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
       <div style="margin-top: 1rem; font-size: 0.9rem;">Loading...</div>
@@ -108,20 +108,6 @@
   <p id="folder-empty-state" style="display:none; text-align:center; color:var(--text-muted); padding:2rem 0; font-style:italic;"><?= __('no_files_in_folder') ?></p>
 
 </div>
-
-<!-- Preview Modal -->
-<dialog id="preview-modal" class="card" style="width:90%; max-width:800px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow-lg); background-color:var(--bg-app); color:var(--text-main);">
-  <form method="dialog">
-    <button type="submit" class="close-modal" style="background:none; border:none; color:var(--text-muted); float:right; font-size:28px; font-weight:bold; cursor:pointer; align-self:flex-end;">&times;</button>
-  </form>
-  <h3 id="preview-title" style="margin-top:0; margin-bottom:15px; word-break:break-all;"></h3>
-  <div id="preview-container" style="display:flex; justify-content:center; align-items:center; min-height:200px; max-height:60vh; overflow:hidden;">
-    <!-- Content injected by JS -->
-  </div>
-  <div style="margin-top:15px; text-align:center;">
-    <a id="preview-download-btn" href="#" target="_blank" class="btn btn-primary"><?= __('btn_download_file') ?></a>
-  </div>
-</dialog>
 
 <!-- Rename Modal -->
 <dialog id="rename-modal" class="card" style="width:90%; max-width:500px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow-lg); background-color:var(--bg-app); color:var(--text-main);">

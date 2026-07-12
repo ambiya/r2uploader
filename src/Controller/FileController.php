@@ -78,7 +78,16 @@ class FileController extends BaseController
                 'nextToken' => null,
             ];
         } else {
-            $result = $this->r2->listObjects($bucket['name'], $prefix, 1000, $ct);
+            $allLevel = $this->r2->listAllInDirectory($bucket['name'], $prefix);
+            $limit = 25;
+            $slicedObjects = array_slice($allLevel['objects'], 0, $limit);
+            $slicedPrefixes = array_slice($allLevel['prefixes'], 0, $limit);
+            $result = [
+                'objects' => $slicedObjects,
+                'prefixes' => $slicedPrefixes,
+                'isTruncated' => count($allLevel['objects']) > $limit || count($allLevel['prefixes']) > $limit,
+                'nextToken' => null,
+            ];
         }
 
         $viewData = new ListViewData(
@@ -148,7 +157,16 @@ class FileController extends BaseController
                 'nextToken' => null, // We use 'page' instead of nextToken for search
             ];
         } else {
-            $result = $this->r2->listObjects($bucket['name'], $prefix, $limit, $ct);
+            $allLevel = $this->r2->listAllInDirectory($bucket['name'], $prefix);
+            $offset = ($page - 1) * $limit;
+            $slicedObjects = array_slice($allLevel['objects'], $offset, $limit);
+            $slicedPrefixes = array_slice($allLevel['prefixes'], $offset, $limit);
+            $result = [
+                'objects' => $slicedObjects,
+                'prefixes' => $slicedPrefixes,
+                'isTruncated' => (($offset + $limit) < count($allLevel['objects'])) || (($offset + $limit) < count($allLevel['prefixes'])),
+                'nextToken' => null,
+            ];
         }
 
         // Format size and append publicUrl

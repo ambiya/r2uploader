@@ -97,6 +97,53 @@ class R2Service
     }
 
     /**
+     * List ALL objects and prefixes under a directory (non-recursive), automatically paginating S3.
+     */
+    public function listAllInDirectory(string $bucket, string $prefix = ''): array
+    {
+        $allObjects = [];
+        $allPrefixes = [];
+        $continuationToken = null;
+
+        do {
+            $params = [
+                'Bucket' => $bucket,
+                'Prefix' => $prefix,
+                'Delimiter' => '/',
+                'MaxKeys' => 1000,
+            ];
+            if ($continuationToken !== null) {
+                $params['ContinuationToken'] = $continuationToken;
+            }
+
+            $result = $this->client->listObjectsV2($params);
+
+            if (isset($result['CommonPrefixes'])) {
+                foreach ($result['CommonPrefixes'] as $cp) {
+                    $allPrefixes[] = $cp['Prefix'];
+                }
+            }
+
+            if (isset($result['Contents'])) {
+                foreach ($result['Contents'] as $obj) {
+                    if ($obj['Key'] !== $prefix) {
+                        $allObjects[] = $obj;
+                    }
+                }
+            }
+
+            $continuationToken = $result['NextContinuationToken'] ?? null;
+        } while (!empty($result['IsTruncated']) && $continuationToken !== null);
+
+        $allPrefixes = array_values(array_unique($allPrefixes));
+
+        return [
+            'objects' => $allObjects,
+            'prefixes' => $allPrefixes,
+        ];
+    }
+
+    /**
      * Upload a file or stream to R2.
      *
      * @param string $bucket

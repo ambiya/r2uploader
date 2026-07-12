@@ -40,113 +40,270 @@
         }
     };
 
-    // Client-side Pagination
+    // Client-side Pagination replaced with AJAX
     document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('pagination-controls');
-        const info = document.getElementById('pagination-info');
-        const selectEl = document.getElementById('per-page-select');
-        const tableContainer = document.getElementById('file-table-container');
+        const fileTableBody = document.getElementById('file-table-body');
+        if (!fileTableBody) return; // Not on list page
 
-        if (!container || !tableContainer) return;
+        const folderGrid = document.getElementById('folder-grid');
+        const folderTitle = document.getElementById('folder-title');
+        const fileTitle = document.getElementById('file-title');
+        const fileTableContainer = document.getElementById('file-table-container');
+        const searchEmptyState = document.getElementById('search-empty-state');
+        const folderEmptyState = document.getElementById('folder-empty-state');
+        const spinner = document.getElementById('loading-spinner');
+        const paginationBar = document.getElementById('pagination-bar');
+        
+        const btnPrev = document.getElementById('btn-prev-page');
+        const btnNext = document.getElementById('btn-next-page');
+        const pageIndicator = document.getElementById('page-indicator');
+        const perPageSelect = document.getElementById('per-page-select');
+        const searchInput = document.getElementById('file-search-input');
 
         const STORAGE_KEY = 'r2mgr_per_page';
-        let perPage = parseInt(localStorage.getItem(STORAGE_KEY) || '25', 10);
-        let currentPage = 1;
+        let limit = parseInt(localStorage.getItem(STORAGE_KEY) || '25', 10);
         const validValues = [25, 50, 100];
-        if (!validValues.includes(perPage)) perPage = 25;
+        if (!validValues.includes(limit)) limit = 25;
+        if (perPageSelect) perPageSelect.value = String(limit);
 
-        function getVisibleRows() {
-            return Array.from(document.querySelectorAll('.file-row')).filter(r => r.dataset.filtered !== 'true');
+        // State
+        let currentPageIndex = 0; // 0-based index
+        let historyTokens = [null]; // Maps page index to continuation token
+        let currentSearch = searchInput ? searchInput.value.trim() : '';
+
+        // Extract current URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const typeParam = urlParams.get('type') || '';
+        const prefixParam = urlParams.get('prefix') || '';
+
+        function renderFileRow(obj, publicUrl, type) {
+            const fileUrl = publicUrl.replace(/\/$/, '') + '/' + obj.Key.replace(/^\//, '');
+            const displayName = obj.Key.replace(prefixParam, '');
+            
+            const tr = document.createElement('tr');
+            tr.className = 'file-row';
+            
+            tr.innerHTML = `
+              <td>
+                <div class="file-name-cell">
+                  <span style="color:var(--accent);">
+                    <svg style="width:1.25rem;height:1.25rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                  </span>
+                  <a href="${escapeHtml(fileUrl)}" class="file-link" target="_blank" style="word-break:break-all;">${escapeHtml(displayName)}</a>
+                </div>
+              </td>
+              <td><span class="badge" style="background-color:var(--bg-app); border:1px solid var(--border); color:var(--text-muted);">${escapeHtml(obj.SizeMB)} MB</span></td>
+              <td>
+                <div class="actions-cell" style="justify-content:flex-end;">
+                  <button class="btn btn-secondary" onclick="previewFile('${escapeJs(fileUrl)}', '${escapeJs(displayName)}')" style="padding:0.4rem 0.65rem;" title="Preview">
+                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </button>
+                  <button class="btn btn-secondary" onclick="copyToClipboard('${escapeJs(fileUrl)}')" style="padding:0.4rem 0.65rem;" title="Copy URL">
+                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                  </button>
+                  <a href="${escapeHtml(fileUrl)}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.65rem;" title="Download">
+                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  </a>
+                  <button class="btn btn-warning" onclick="renameFile('${escapeJs(obj.Key)}','${escapeJs(type)}')" style="padding:0.4rem 0.65rem;" title="Rename">
+                    <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <form method="POST" action="/?action=delete&type=${encodeURIComponent(type)}&key=${encodeURIComponent(obj.Key)}" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus file ini?');">
+                    <input type="hidden" name="csrf_token" value="${escapeHtml(window._csrfToken || '')}">
+                    <button class="btn btn-danger" style="padding:0.4rem 0.65rem;" title="Delete">
+                      <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            `;
+            return tr;
         }
 
-        function render() {
-            const rows = getVisibleRows();
-            const totalFiles = rows.length;
-            const totalPages = Math.max(1, Math.ceil(totalFiles / perPage));
-            if (currentPage > totalPages) currentPage = totalPages;
+        function renderFolderItem(folder, type) {
+            const folderDisplay = folder.replace(prefixParam, '');
+            const a = document.createElement('a');
+            a.className = 'folder-item';
+            a.href = `/?action=list&type=${encodeURIComponent(type)}&prefix=${encodeURIComponent(folder)}`;
+            a.innerHTML = `
+              <span class="folder-icon">
+                <svg style="width:1.25rem;height:1.25rem;" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+              </span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(folderDisplay)}</span>
+            `;
+            return a;
+        }
 
-            const start = (currentPage - 1) * perPage;
-            const end = Math.min(start + perPage, totalFiles);
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.toString()
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+        
+        function escapeJs(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.toString().replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
 
-            rows.forEach((row, idx) => {
-                row.style.display = (idx >= start && idx < end) ? '' : 'none';
-            });
+        function fetchPage() {
+            // UI State loading
+            spinner.style.display = 'block';
+            fileTableContainer.style.display = 'none';
+            folderGrid.style.display = 'none';
+            folderTitle.style.display = 'none';
+            fileTitle.style.display = 'none';
+            paginationBar.style.display = 'none';
+            searchEmptyState.style.display = 'none';
+            folderEmptyState.style.display = 'none';
+            fileTableBody.innerHTML = '';
+            folderGrid.innerHTML = '';
 
-            document.querySelectorAll('.file-row[data-filtered="true"]').forEach(row => {
-                row.style.display = 'none';
-            });
-
-            if (info) {
-                info.textContent = totalFiles === 0
-                    ? 'Tidak ada file'
-                    : 'Menampilkan ' + (start + 1) + '-' + end + ' dari ' + totalFiles + ' file';
+            const token = historyTokens[currentPageIndex];
+            
+            // Build API URL
+            const apiUrl = new URL(window.location.origin + '/');
+            apiUrl.searchParams.set('action', 'api_list');
+            apiUrl.searchParams.set('type', typeParam);
+            apiUrl.searchParams.set('prefix', prefixParam);
+            apiUrl.searchParams.set('limit', limit);
+            
+            if (currentSearch) {
+                apiUrl.searchParams.set('q', currentSearch);
+                apiUrl.searchParams.set('page', currentPageIndex + 1); // Search uses page param
+            } else if (token) {
+                apiUrl.searchParams.set('ct', token);
             }
 
-            container.innerHTML = '';
-            if (totalPages <= 1) return;
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    spinner.style.display = 'none';
+                    if (data.error) {
+                        searchEmptyState.textContent = data.error;
+                        searchEmptyState.style.display = 'block';
+                        return;
+                    }
 
-            container.appendChild(createBtn('\u00ab', currentPage > 1, () => goTo(currentPage - 1)));
+                    window._csrfToken = data.csrfToken; // Store for delete forms
 
-            getPages(currentPage, totalPages).forEach(p => {
-                if (p === '...') {
-                    const el = document.createElement('span');
-                    el.className = 'page-ellipsis';
-                    el.textContent = '\u2026';
-                    container.appendChild(el);
-                } else {
-                    container.appendChild(createBtn(String(p), true, () => goTo(p), p === currentPage));
+                    // Render folders
+                    if (data.prefixes && data.prefixes.length > 0) {
+                        folderTitle.style.display = 'block';
+                        folderGrid.style.display = 'grid';
+                        data.prefixes.forEach(p => {
+                            folderGrid.appendChild(renderFolderItem(p, data.type));
+                        });
+                    }
+
+                    // Render files
+                    if (data.objects && data.objects.length > 0) {
+                        fileTitle.style.display = 'block';
+                        fileTableContainer.style.display = 'block';
+                        data.objects.forEach(obj => {
+                            fileTableBody.appendChild(renderFileRow(obj, data.publicUrl, data.type));
+                        });
+                    }
+
+                    // Empty states
+                    if (data.objects.length === 0 && data.prefixes.length === 0) {
+                        if (currentSearch) {
+                            searchEmptyState.style.display = 'block';
+                        } else {
+                            folderEmptyState.style.display = 'block';
+                        }
+                    }
+
+                    // Pagination state
+                    if (data.objects.length > 0 || data.prefixes.length > 0 || currentPageIndex > 0) {
+                        paginationBar.style.display = 'flex';
+                        pageIndicator.textContent = `Page ${currentPageIndex + 1}`;
+                        
+                        btnPrev.disabled = currentPageIndex === 0;
+                        btnNext.disabled = !data.isTruncated;
+                    }
+
+                    // If there's a next page, ensure we store its token
+                    if (data.isTruncated) {
+                        // For search, we just increment page. For normal, we need the token.
+                        historyTokens[currentPageIndex + 1] = currentSearch ? null : data.nextToken;
+                    }
+                })
+                .catch(err => {
+                    spinner.style.display = 'none';
+                    searchEmptyState.textContent = 'Gagal memuat data.';
+                    searchEmptyState.style.display = 'block';
+                    console.error(err);
+                });
+        }
+
+        // Event Listeners
+        if (btnPrev) {
+            btnPrev.addEventListener('click', () => {
+                if (currentPageIndex > 0) {
+                    currentPageIndex--;
+                    fetchPage();
                 }
             });
-
-            container.appendChild(createBtn('\u00bb', currentPage < totalPages, () => goTo(currentPage + 1)));
         }
 
-        function goTo(page) {
-            currentPage = page;
-            render();
-            const table = document.getElementById('file-table');
-            if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (btnNext) {
+            btnNext.addEventListener('click', () => {
+                currentPageIndex++;
+                fetchPage();
+            });
         }
 
-        function createBtn(label, enabled, onClick, isActive) {
-            const btn = document.createElement('button');
-            btn.className = 'page-btn' + (isActive ? ' active' : '');
-            btn.textContent = label;
-            if (!enabled) btn.disabled = true;
-            btn.addEventListener('click', onClick);
-            return btn;
+        if (perPageSelect) {
+            perPageSelect.addEventListener('change', (e) => {
+                limit = parseInt(e.target.value, 10);
+                localStorage.setItem(STORAGE_KEY, String(limit));
+                // Reset to page 1
+                currentPageIndex = 0;
+                historyTokens = [null];
+                fetchPage();
+            });
         }
 
-        function getPages(current, total) {
-            if (total <= 7) {
-                const arr = [];
-                for (let i = 1; i <= total; i++) arr.push(i);
-                return arr;
+        // Search (Debounce)
+        if (searchInput) {
+            let timeout = null;
+            // Also prevent form submission since we do AJAX
+            const form = searchInput.closest('form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    triggerSearch();
+                });
             }
-            const pages = [1];
-            if (current > 3) pages.push('...');
-            for (let s = Math.max(2, current - 1); s <= Math.min(total - 1, current + 1); s++) {
-                pages.push(s);
+
+            searchInput.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(triggerSearch, 500);
+            });
+
+            function triggerSearch() {
+                const val = searchInput.value.trim();
+                if (val !== currentSearch) {
+                    currentSearch = val;
+                    currentPageIndex = 0;
+                    historyTokens = [null];
+                    
+                    // Update URL silently
+                    const url = new URL(window.location.href);
+                    if (currentSearch) url.searchParams.set('q', currentSearch);
+                    else url.searchParams.delete('q');
+                    window.history.replaceState({}, '', url);
+
+                    fetchPage();
+                }
             }
-            if (current < total - 2) pages.push('...');
-            pages.push(total);
-            return pages;
         }
 
-        window._r2Pagination = {
-            reset: function() { currentPage = 1; render(); },
-            changePerPage: function(val) {
-                perPage = parseInt(val, 10);
-                localStorage.setItem(STORAGE_KEY, String(perPage));
-                currentPage = 1;
-                render();
-            }
-        };
-        window.changePerPage = window._r2Pagination.changePerPage;
-
-        if (selectEl) selectEl.value = String(perPage);
-        render();
-
+        // Initial fetch
+        fetchPage();
     });
 
     // --- Preview Modal ---

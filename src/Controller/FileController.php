@@ -96,6 +96,82 @@ class FileController extends BaseController
         return $this->renderPage(__('nav_file_manager'), 'partials/list-content', $viewData, $this->csrf->getToken(), ['file-list']);
     }
 
+    /**
+     * API endpoint to list files via AJAX.
+     * GET /?action=api_list&type=...&prefix=...&ct=...&limit=...&q=...&page=...
+     */
+    public function apiList(Request $request): Response
+    {
+        $type   = $request->query('type');
+        $prefix = (string) $request->query('prefix', '');
+        $ct     = $request->query('ct');
+        $search = (string) $request->query('q', '');
+        $limit  = (int) $request->query('limit', 25);
+        if ($limit < 1 || $limit > 1000) $limit = 25;
+        $page   = (int) $request->query('page', 1);
+        if ($page < 1) $page = 1;
+
+        $buckets = $this->bucketResolver->all();
+        if (empty($type) && !empty($buckets)) {
+            $type = $this->bucketResolver->firstType();
+        }
+
+        $bucket = $this->bucketResolver->resolve($type);
+
+        if (!$this->r2 || empty($buckets)) {
+            return Response::json(['error' => __('err_r2_not_configured')], 400);
+        }
+
+        if (!$bucket || empty($bucket['name'])) {
+            return Response::json(['error' => __('err_bucket_not_found')], 404);
+        }
+
+        if (str_contains($prefix, '..')) {
+            return Response::json(['error' => __('err_path_traversal')], 400);
+        }
+        $prefix = ltrim($prefix, '/');
+
+        if ($search !== '') {
+            $allObjects = $this->r2->listAllObjects($bucket['name'], $prefix);
+            $filteredObjects = array_values(array_filter($allObjects, function($obj) use ($search) {
+                return stripos($obj['Key'], $search) !== false;
+            }));
+            
+            // In-memory pagination for search
+            $offset = ($page - 1) * $limit;
+            $sliced = array_slice($filteredObjects, $offset, $limit);
+            
+            $result = [
+                'objects' => $sliced,
+                'prefixes' => [],
+                'isTruncated' => ($offset + $limit) < count($filteredObjects),
+                'nextToken' => null, // We use 'page' instead of nextToken for search
+            ];
+        } else {
+            $result = $this->r2->listObjects($bucket['name'], $prefix, $limit, $ct);
+        }
+
+        // Format size and append publicUrl
+        $formattedObjects = [];
+        foreach ($result['objects'] as $obj) {
+            $formattedObjects[] = [
+                'Key' => $obj['Key'],
+                'Size' => $obj['Size'],
+                'SizeMB' => number_format(($obj['Size'] ?? 0) / 1024 / 1024, 2),
+                'LastModified' => isset($obj['LastModified']) ? $obj['LastModified']->format('c') : null,
+            ];
+        }
+
+        return Response::json([
+            'objects' => $formattedObjects,
+            'prefixes' => $result['prefixes'],
+            'isTruncated' => $result['isTruncated'],
+            'nextToken' => $result['nextToken'],
+            'publicUrl' => $bucket['publicUrl'],
+            'csrfToken' => $this->csrf->getToken(),
+            'type' => $type
+        ]);
+    }
 
     /**
      * Handle file deletion.

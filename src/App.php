@@ -274,6 +274,7 @@ class App
         $router->get('upload', fn(Request $r) => $c->get('uploadCtrl')->showForm(), [$authMw]);
         $router->post('upload', fn(Request $r) => $c->get('uploadCtrl')->handleUpload($r), [$authMw, $csrfMw]);
         $router->get('list', fn(Request $r) => $c->get('fileCtrl')->list($r), [$authMw]);
+        $router->get('api_list', fn(Request $r) => $c->get('fileCtrl')->apiList($r), [$authMw]);
         $router->post('delete', fn(Request $r) => $c->get('fileCtrl')->delete($r), [$authMw, $csrfMw]);
         $router->post('rename', fn(Request $r) => $c->get('fileCtrl')->rename($r), [$authMw, $csrfMw]);
 

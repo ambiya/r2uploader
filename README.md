@@ -4,7 +4,7 @@ PHP web app to upload and manage files in **Cloudflare R2** (S3-compatible API).
 
 ## Features
 
-- **Upload** from a remote URL or from your device
+- **Upload** multiple files from your device or a single file from a remote URL
 - **Browse** objects by folder prefix (`?action=list`)
 - **Delete** and **rename** objects
 - **Auto-retention**: when uploading into a folder, keep only the **N newest** files (configurable via `FOLDER_MAX_FILES`; older ones are removed)
@@ -115,9 +115,11 @@ Use HTTPS in production.
 
 | URL | Purpose |
 |-----|---------|
-| `/` | Upload form (remote URL or file) |
+| `/` | Landing page (Login or Upload redirect) |
+| `/?action=upload` | Upload form (remote URL or multiple files) |
 | `/?action=list&type=<bucket_id>` | List a specific bucket (e.g. apps, games) |
 | `/?action=list&type=<bucket_id>&prefix=Folder/` | List inside a prefix |
+| `/?action=api_list` | Fetch files as JSON (Internal API) |
 | `/?action=dashboard` | View activity logs (Admin only) |
 | `/?action=users` | Manage users (Admin only) |
 | `/?action=settings` | Manage system settings and R2 buckets (Admin only) |

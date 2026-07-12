@@ -59,12 +59,12 @@
 
     <div class="form-group">
       <label for="rename-file"><?= __('rename_optional') ?></label>
-      <input type="text" id="rename-file" name="filename" placeholder="<?= __('placeholder_spotify_premium') ?>">
+      <input type="text" id="rename-file" name="filename" placeholder="<?= __('placeholder_filename') ?>">
     </div>
 
     <div class="form-group">
       <label for="folder-input"><?= __('folder_optional') ?></label>
-      <input type="text" id="folder-input" name="folder" placeholder="<?= __('placeholder_spotify') ?>" aria-describedby="folder-note">
+      <input type="text" id="folder-input" name="folder" placeholder="<?= __('placeholder_folder') ?>" aria-describedby="folder-note">
       <?php if (!empty($folderRetentionNote)): ?>
       <p id="folder-note" style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">
         <?= htmlspecialchars($folderRetentionNote) ?>

@@ -45,7 +45,7 @@
 
       <div class="form-group">
         <label for="allowed_extensions"><?= __('allowed_extensions') ?></label>
-        <input type="text" name="allowed_extensions" id="allowed_extensions" placeholder="Contoh: jpg, png, zip, apk" value="<?= htmlspecialchars(implode(', ', $config['allowedExtensions'] ?? [])) ?>">
+        <input type="text" name="allowed_extensions" id="allowed_extensions" placeholder="<?= __('placeholder_ext') ?>" value="<?= htmlspecialchars(implode(', ', $config['allowedExtensions'] ?? [])) ?>">
         <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
           <?= __('allowed_extensions_desc') ?>
         </p>
@@ -100,16 +100,16 @@
         ?>
           <div class="bucket-row" data-idx="<?= $idx ?>" style="display: grid; grid-template-columns: 1.2fr 1.8fr 2.5fr auto; gap: 1rem; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px dotted var(--border-light);">
             <div>
-              <input type="text" name="buckets[<?= $idx ?>][key]" placeholder="Contoh: apps" value="<?= htmlspecialchars((string)$key) ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\-]+$">
+              <input type="text" name="buckets[<?= $idx ?>][key]" placeholder="<?= __('placeholder_bucket_slug') ?>" value="<?= htmlspecialchars((string)$key) ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\-]+$">
             </div>
             <div>
-              <input type="text" name="buckets[<?= $idx ?>][name]" placeholder="Contoh: apps-bucket" value="<?= htmlspecialchars($bucket['name'] ?? '') ?>" required style="margin-bottom:0;">
+              <input type="text" name="buckets[<?= $idx ?>][name]" placeholder="<?= __('placeholder_bucket_name') ?>" value="<?= htmlspecialchars($bucket['name'] ?? '') ?>" required style="margin-bottom:0;">
             </div>
             <div>
-              <input type="url" name="buckets[<?= $idx ?>][publicUrl]" placeholder="Contoh: https://apps.domain.com" value="<?= htmlspecialchars($bucket['publicUrl'] ?? '') ?>" required style="margin-bottom:0;">
+              <input type="url" name="buckets[<?= $idx ?>][publicUrl]" placeholder="<?= __('placeholder_bucket_url') ?>" value="<?= htmlspecialchars($bucket['publicUrl'] ?? '') ?>" required style="margin-bottom:0;">
             </div>
             <div style="text-align: center;">
-              <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="Hapus Bucket">
+              <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
                 <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               </button>
             </div>
@@ -152,16 +152,16 @@ function addBucketRow() {
 
     row.innerHTML = `
         <div>
-          <input type="text" name="buckets[${bucketIdx}][key]" placeholder="Contoh: new-bucket" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\\-]+$">
+          <input type="text" name="buckets[${bucketIdx}][key]" placeholder="<?= __('placeholder_new_bucket_slug') ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\\-]+$">
         </div>
         <div>
-          <input type="text" name="buckets[${bucketIdx}][name]" placeholder="Contoh: r2-bucket-name" required style="margin-bottom:0;">
+          <input type="text" name="buckets[${bucketIdx}][name]" placeholder="<?= __('placeholder_new_bucket_name') ?>" required style="margin-bottom:0;">
         </div>
         <div>
-          <input type="url" name="buckets[${bucketIdx}][publicUrl]" placeholder="Contoh: https://domain.com" required style="margin-bottom:0;">
+          <input type="url" name="buckets[${bucketIdx}][publicUrl]" placeholder="<?= __('placeholder_new_bucket_url') ?>" required style="margin-bottom:0;">
         </div>
         <div style="text-align: center;">
-          <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="Hapus Bucket">
+          <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
             <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
           </button>
         </div>

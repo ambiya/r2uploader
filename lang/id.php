@@ -16,12 +16,12 @@ return [
     'no' => 'Tidak',
 
     // Navigation
-    'nav_upload' => 'Upload File',
+    'nav_upload' => 'Unggah File',
     'nav_file_manager' => 'File Manager',
     'nav_dashboard' => 'Dashboard',
     'nav_users' => 'Manajemen User',
     'nav_settings' => 'Pengaturan',
-    'nav_logout' => 'Logout',
+    'nav_logout' => 'Keluar',
 
     // Home
     'home_title' => 'Beranda',
@@ -32,9 +32,9 @@ return [
 
     // Login
     'login_title' => 'Login R2 Manager',
-    'username' => 'Username',
-    'password' => 'Password',
-    'btn_login' => 'Login',
+    'username' => 'Nama Pengguna',
+    'password' => 'Kata Sandi',
+    'btn_login' => 'Masuk',
 
     // Dashboard
     'dashboard_analytics' => 'Dashboard & Analytics',
@@ -71,16 +71,16 @@ return [
     'btn_upload_file' => 'Upload File',
 
     // Users
-    'user_list' => 'Daftar User',
-    'add_new_user' => 'Tambah User Baru',
+    'user_list' => 'Daftar Pengguna',
+    'add_new_user' => 'Tambah Pengguna Baru',
     'created' => 'Dibuat',
     'last_login' => 'Login Terakhir',
     'pwd_help' => '(Kosongkan jika tidak ingin mengubah password)',
-    'role_editor' => 'Editor (Upload, Delete, Rename)',
+    'role_editor' => 'Editor (Upload, Hapus, Rename)',
     'role_admin' => 'Admin (Semua akses + Manajemen User)',
-    'btn_save_user' => 'Simpan User',
-    'btn_update_user' => 'Update User',
-    'edit_user' => 'Edit User',
+    'btn_save_user' => 'Simpan Pengguna',
+    'btn_update_user' => 'Update Pengguna',
+    'edit_user' => 'Edit Pengguna',
 
     // Settings
     'system_settings' => 'Pengaturan Sistem',
@@ -170,4 +170,23 @@ return [
     'btn_download_file' => 'Download File',
     'rename_file' => 'Rename File',
     'new_name' => 'Nama Baru:',
+    
+    // Additional Strings
+    'tooltip_billable_size' => 'Menampilkan total ukuran file aktif (Base-2). Ukuran tagihan (billable size) di dashboard Cloudflare mungkin sedikit berbeda karena menghitung file sampah (multipart) dan file lama.',
+    'tooltip_env_incomplete' => 'Harap lengkapi konfigurasi .env terlebih dahulu',
+    'err_internal_server' => 'Terjadi kesalahan internal.',
+    'confirm_delete_user' => 'Hapus user :username?',
+    'title_edit' => 'Edit',
+    'title_delete' => 'Delete',
+    'label_role' => 'Role',
+    'title_delete_bucket' => 'Hapus Bucket',
+    'placeholder_spotify_premium' => 'Contoh: Spotify Premium',
+    'placeholder_spotify' => 'Contoh: Spotify',
+    'placeholder_ext' => 'Contoh: jpg, png, zip, apk',
+    'placeholder_bucket_slug' => 'Contoh: apps',
+    'placeholder_bucket_name' => 'Contoh: apps-bucket',
+    'placeholder_bucket_url' => 'Contoh: https://apps.domain.com',
+    'placeholder_new_bucket_slug' => 'Contoh: new-bucket',
+    'placeholder_new_bucket_name' => 'Contoh: r2-bucket-name',
+    'placeholder_new_bucket_url' => 'Contoh: https://domain.com',
 ];

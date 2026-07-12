@@ -85,10 +85,10 @@ class ErrorHandler
     {
         $message = $this->debug
             ? $e->getMessage() . "\n\n" . $e->getTraceAsString()
-            : 'Terjadi kesalahan internal.';
+            : __('err_internal_server');
 
         if ($request->isAjax()) {
-            $data = ['error' => $this->debug ? $e->getMessage() : 'Terjadi kesalahan internal.'];
+            $data = ['error' => $this->debug ? $e->getMessage() : __('err_internal_server')];
             if ($this->debug) {
                 $data['trace'] = $e->getTraceAsString();
             }

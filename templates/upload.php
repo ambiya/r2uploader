@@ -59,12 +59,12 @@
 
     <div class="form-group">
       <label for="rename-file"><?= __('rename_optional') ?></label>
-      <input type="text" id="rename-file" name="filename" placeholder="Contoh: Spotify Premium">
+      <input type="text" id="rename-file" name="filename" placeholder="<?= __('placeholder_spotify_premium') ?>">
     </div>
 
     <div class="form-group">
       <label for="folder-input"><?= __('folder_optional') ?></label>
-      <input type="text" id="folder-input" name="folder" placeholder="Contoh: Spotify" aria-describedby="folder-note">
+      <input type="text" id="folder-input" name="folder" placeholder="<?= __('placeholder_spotify') ?>" aria-describedby="folder-note">
       <?php if (!empty($folderRetentionNote)): ?>
       <p id="folder-note" style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-muted);">
         <?= htmlspecialchars($folderRetentionNote) ?>
@@ -72,7 +72,7 @@
       <?php endif; ?>
     </div>
 
-    <button id="submit-btn" type="submit" class="btn btn-primary btn-submit"<?= !$isConfigured ? ' disabled title="Harap lengkapi konfigurasi .env terlebih dahulu"' : '' ?>>
+    <button id="submit-btn" type="submit" class="btn btn-primary btn-submit"<?= !$isConfigured ? ' disabled title="' . __('tooltip_env_incomplete') . '"' : '' ?>>
       <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
       <span id="submit-spinner" class="spinner" style="display:none;"></span>
       <span id="submit-btn-text"><?= __('btn_upload_file') ?></span>

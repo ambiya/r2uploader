@@ -170,4 +170,23 @@ return [
     'btn_download_file' => 'Download File',
     'rename_file' => 'Rename File',
     'new_name' => 'New Name:',
+    
+    // Additional Strings
+    'tooltip_billable_size' => 'Shows total active file size (Base-2). The billable size in the Cloudflare dashboard may differ slightly because it includes incomplete multipart uploads and deleted files.',
+    'tooltip_env_incomplete' => 'Please complete the .env configuration first',
+    'err_internal_server' => 'An internal error occurred.',
+    'confirm_delete_user' => 'Delete user :username?',
+    'title_edit' => 'Edit',
+    'title_delete' => 'Delete',
+    'label_role' => 'Role',
+    'title_delete_bucket' => 'Delete Bucket',
+    'placeholder_spotify_premium' => 'Example: Spotify Premium',
+    'placeholder_spotify' => 'Example: Spotify',
+    'placeholder_ext' => 'Example: jpg, png, zip, apk',
+    'placeholder_bucket_slug' => 'Example: apps',
+    'placeholder_bucket_name' => 'Example: apps-bucket',
+    'placeholder_bucket_url' => 'Example: https://apps.domain.com',
+    'placeholder_new_bucket_slug' => 'Example: new-bucket',
+    'placeholder_new_bucket_name' => 'Example: r2-bucket-name',
+    'placeholder_new_bucket_url' => 'Example: https://domain.com',
 ];

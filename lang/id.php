@@ -150,7 +150,6 @@ return [
     // List Content / File Manager
     'choose_bucket' => 'Pilih Bucket:',
     'file_folder_list' => 'Daftar File & Folder',
-    'btn_back_to_upload' => 'Kembali ke Upload',
     'search_placeholder' => 'Cari file',
     'btn_search' => 'Cari',
     'folder' => 'Folder',

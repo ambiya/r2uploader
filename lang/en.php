@@ -150,7 +150,6 @@ return [
     // List Content / File Manager
     'choose_bucket' => 'Choose Bucket:',
     'file_folder_list' => 'File & Folder List',
-    'btn_back_to_upload' => 'Back to Upload',
     'search_placeholder' => 'Search files',
     'btn_search' => 'Search',
     'folder' => 'Folder',

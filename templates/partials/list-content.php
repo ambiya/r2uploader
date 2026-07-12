@@ -50,11 +50,6 @@
         <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         <?= __('back') ?>
       </a>
-    <?php else: ?>
-      <a href="/?action=upload" class="btn btn-secondary">
-        <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        <?= __('btn_back_to_upload') ?>
-      </a>
     <?php endif; ?>
   </div>
 

@@ -230,7 +230,8 @@ class App
                 $c->get('csrf'),
                 $c->get('logger'),
                 $c->get('bucketResolver'),
-                $c->get('r2')
+                $c->get('r2'),
+                $c->get('fileIndex')
             );
         });
 

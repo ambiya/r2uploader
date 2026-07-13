@@ -197,4 +197,64 @@ class R2FileIndexService
             'prefixes' => $prefixes,
         ];
     }
+
+    /**
+     * Get storage statistics for a bucket from local SQLite index.
+     *
+     * @param string $bucket
+     * @return array{totalFiles: int, totalSize: int, fileTypes: array, largestFiles: array}
+     */
+    public function getStorageStats(string $bucket): array
+    {
+        // 1. Get total files and total size
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as total_files, SUM(size) as total_size 
+            FROM file_index 
+            WHERE bucket = ? AND is_dir = 0
+        ");
+        $stmt->execute([$bucket]);
+        $row = $stmt->fetch();
+        $totalFiles = (int) ($row['total_files'] ?? 0);
+        $totalSize = (int) ($row['total_size'] ?? 0);
+
+        // 2. Get largest files (top 5)
+        $stmt = $this->db->prepare("
+            SELECT object_key as Key, size as Size 
+            FROM file_index 
+            WHERE bucket = ? AND is_dir = 0 
+            ORDER BY size DESC 
+            LIMIT 5
+        ");
+        $stmt->execute([$bucket]);
+        $largestFiles = $stmt->fetchAll();
+
+        // 3. Get file types (extensions)
+        $stmt = $this->db->prepare("
+            SELECT object_key 
+            FROM file_index 
+            WHERE bucket = ? AND is_dir = 0
+        ");
+        $stmt->execute([$bucket]);
+        
+        $fileTypes = [];
+        while ($key = $stmt->fetchColumn()) {
+            $ext = strtolower(pathinfo($key, PATHINFO_EXTENSION));
+            if (empty($ext)) {
+                $ext = 'unknown';
+            }
+            if (!isset($fileTypes[$ext])) {
+                $fileTypes[$ext] = 0;
+            }
+            $fileTypes[$ext]++;
+        }
+        arsort($fileTypes);
+
+        return [
+            'totalFiles' => $totalFiles,
+            'totalSize' => $totalSize,
+            'fileTypes' => $fileTypes,
+            'largestFiles' => $largestFiles,
+        ];
+    }
 }
+

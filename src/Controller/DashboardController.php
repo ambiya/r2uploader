@@ -8,6 +8,7 @@ use R2Uploader\Security\Csrf;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2Service;
+use R2Uploader\Service\R2FileIndexService;
 use R2Uploader\ViewData\DashboardViewData;
 
 class DashboardController extends BaseController
@@ -16,17 +17,20 @@ class DashboardController extends BaseController
     private ActivityLogger $logger;
     private BucketResolver $bucketResolver;
     private ?R2Service $r2;
+    private R2FileIndexService $fileIndex;
 
     public function __construct(
         Csrf $csrf,
         ActivityLogger $logger,
         BucketResolver $bucketResolver,
-        ?R2Service $r2
+        ?R2Service $r2,
+        R2FileIndexService $fileIndex
     ) {
         $this->csrf           = $csrf;
         $this->logger         = $logger;
         $this->bucketResolver = $bucketResolver;
         $this->r2             = $r2;
+        $this->fileIndex      = $fileIndex;
     }
 
     /**
@@ -38,13 +42,18 @@ class DashboardController extends BaseController
         $userStats  = $this->logger->getUserActivityStats();
         $buckets    = $this->bucketResolver->all();
 
-        // Fetch live R2 stats for configured buckets
+        // Fetch stats for configured buckets from index database (with R2 sync fallback if empty)
         $r2Stats = [];
         if ($this->r2) {
             foreach ($buckets as $type => $bucket) {
                 if (!empty($bucket['name'])) {
                     try {
-                        $stats = $this->r2->getStorageStats($bucket['name']);
+                        // Auto-sync if database index is empty for this bucket
+                        if ($this->fileIndex->isEmpty($bucket['name'])) {
+                            $this->fileIndex->syncBucket($bucket['name'], $this->r2);
+                        }
+
+                        $stats = $this->fileIndex->getStorageStats($bucket['name']);
                         $r2Stats[$bucket['name']] = [
                             'type'         => $type,
                             'totalFiles'   => $stats['totalFiles'],

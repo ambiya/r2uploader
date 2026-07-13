@@ -5,6 +5,7 @@
 
 # Database
 data/database.sqlite
+data/.admin_migrated
 
 # Composer
 /vendor/

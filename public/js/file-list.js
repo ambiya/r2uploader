@@ -212,9 +212,9 @@
                   <button class="btn btn-warning" onclick="renameFile('${escapeJs(obj.Key)}','${escapeJs(type)}')" style="padding:0.4rem 0.65rem;" title="Rename">
                     <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
-                  <form method="POST" action="/?action=delete&type=${encodeURIComponent(type)}&key=${encodeURIComponent(obj.Key)}" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus file ini?');">
+                  <form method="POST" action="/?action=delete&type=${encodeURIComponent(type)}&key=${encodeURIComponent(obj.Key)}" class="ajax-delete-form" data-key="${escapeHtml(obj.Key)}" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="${escapeHtml(window._csrfToken || '')}">
-                    <button class="btn btn-danger" style="padding:0.4rem 0.65rem;" title="Delete">
+                    <button type="submit" class="btn btn-danger" style="padding:0.4rem 0.65rem;" title="Delete">
                       <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                   </form>
@@ -486,29 +486,70 @@
                     ? `Apakah Anda yakin ingin menghapus ${selectedFiles.size} file terpilih?` 
                     : `Are you sure you want to delete ${selectedFiles.size} selected file(s)?`;
                 
-                if (!confirm(confirmMsg)) return;
+                const modal = document.getElementById('delete-modal');
+                if (modal) {
+                    document.getElementById('delete-modal-msg').textContent = confirmMsg;
+                    const confirmBtn = document.getElementById('confirm-delete-btn');
+                    const btn = this;
+                    
+                    confirmBtn.onclick = function() {
+                        modal.close();
+                        
+                        const formData = new FormData();
+                        formData.append('csrf_token', window._csrfToken || '');
+                        selectedFiles.forEach(key => {
+                            formData.append('keys[]', key);
+                        });
+                        
+                        const originalContent = btn.innerHTML;
+                        btn.innerHTML = '...';
+                        btn.disabled = true;
 
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/?action=bulk_delete&type=' + encodeURIComponent(typeParam);
-
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = 'csrf_token';
-                csrfInput.value = window._csrfToken || '';
-                form.appendChild(csrfInput);
-
-                selectedFiles.forEach(key => {
-                    const keyInput = document.createElement('input');
-                    keyInput.type = 'hidden';
-                    keyInput.name = 'keys[]';
-                    keyInput.value = key;
-                    form.appendChild(keyInput);
+                fetch('/?action=bulk_delete&type=' + encodeURIComponent(typeParam), {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window._csrfToken = data.csrfToken;
+                        
+                        // Remove deleted elements from DOM
+                        selectedFiles.forEach(key => {
+                            const checkboxes = document.querySelectorAll('.file-select-checkbox');
+                            checkboxes.forEach(cb => {
+                                if (cb.getAttribute('data-key') === key) {
+                                    const tr = cb.closest('tr');
+                                    if (tr) tr.remove();
+                                }
+                            });
+                        });
+                        
+                        selectedFiles.clear();
+                        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                        if (window.showToast) window.showToast(data.message || 'Files deleted', 'success');
+                    } else {
+                        if (window.showToast) window.showToast(data.error || 'Failed to delete files', 'error');
+                        else alert(data.error || 'Failed to delete files');
+                    }
+                })
+                .catch(err => {
+                    if (window.showToast) window.showToast('Network error while deleting', 'error');
+                    else alert('Network error while deleting');
+                })
+                .finally(() => {
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    updateBulkActionsBar();
                 });
-
-                document.body.appendChild(form);
-                form.submit();
-            });
+            };
+            modal.showModal();
+        }
+    });
         }
 
         // Bulk Download Action
@@ -546,6 +587,71 @@
                 updateBulkActionsBar();
             });
         }
+
+        // Single Delete AJAX Handler
+        document.body.addEventListener('submit', function(e) {
+            if (e.target && e.target.classList.contains('ajax-delete-form')) {
+                e.preventDefault();
+                    
+                    const form = e.target;
+                    const key = form.getAttribute('data-key');
+                    const tr = form.closest('tr');
+                    const btn = form.querySelector('button');
+                    const originalContent = btn.innerHTML;
+                    
+                    const fileName = key.split('/').pop();
+                    const confirmMsg = document.documentElement.lang === 'id'
+                        ? `Hapus file "${fileName}"?`
+                        : `Delete file "${fileName}"?`;
+                        
+                    const modal = document.getElementById('delete-modal');
+                    if (modal) {
+                        document.getElementById('delete-modal-msg').textContent = confirmMsg;
+                        const confirmBtn = document.getElementById('confirm-delete-btn');
+                        
+                        confirmBtn.onclick = function() {
+                            modal.close();
+                            btn.innerHTML = '...';
+                            btn.disabled = true;
+                            
+                            const formData = new FormData(form);
+                            
+                            fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window._csrfToken = data.csrfToken;
+                            if (tr) tr.remove();
+                            if (typeof selectedFiles !== 'undefined') {
+                                selectedFiles.delete(key);
+                                updateBulkActionsBar();
+                            }
+                            if (window.showToast) window.showToast(data.message || 'File deleted', 'success');
+                        } else {
+                            if (window.showToast) window.showToast(data.error || 'Failed to delete file', 'error');
+                            else alert(data.error || 'Failed to delete file');
+                            btn.innerHTML = originalContent;
+                            btn.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        if (window.showToast) window.showToast('Network error while deleting', 'error');
+                        else alert('Network error while deleting');
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    });
+                };
+                modal.showModal();
+            }
+            }
+        });
 
         // Initial fetch
         fetchPage();

@@ -255,6 +255,14 @@ class FileController extends BaseController
         // Regenerate CSRF to prevent replay
         $this->csrf->regenerate();
 
+        if ($request->isAjax()) {
+            return Response::json([
+                'success' => true,
+                'csrfToken' => $this->csrf->getToken(),
+                'message' => 'File deleted successfully'
+            ]);
+        }
+
         $prefix = dirname($key);
         if ($prefix === '.') {
             $prefix = '';
@@ -341,6 +349,14 @@ class FileController extends BaseController
         }
 
         $this->csrf->regenerate();
+
+        if ($request->isAjax()) {
+            return Response::json([
+                'success' => true,
+                'csrfToken' => $this->csrf->getToken(),
+                'message' => 'Files deleted successfully'
+            ]);
+        }
 
         $prefix = '';
         if (!empty($keys[0])) {

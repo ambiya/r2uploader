@@ -182,3 +182,13 @@
     </div>
   </form>
 </dialog>
+
+<!-- Delete Modal -->
+<dialog id="delete-modal" class="card" style="width:90%; max-width:400px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow-lg); background-color:var(--bg-app); color:var(--text-main);">
+  <h3 style="margin-top:0; margin-bottom:15px;"><?= __('title_delete') ?></h3>
+  <p id="delete-modal-msg" style="margin-bottom: 20px;"></p>
+  <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('delete-modal').close()"><?= __('cancel') ?></button>
+    <button type="button" id="confirm-delete-btn" class="btn btn-danger"><?= __('delete') ?></button>
+  </div>
+</dialog>

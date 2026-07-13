@@ -1,7 +1,7 @@
 <?php
 return [
     // General
-    'app_title' => 'R2 Manager',
+    'app_title' => 'R2Uploader',
     'save' => 'Save',
     'cancel' => 'Cancel',
     'delete' => 'Delete',
@@ -25,13 +25,13 @@ return [
 
     // Home
     'home_title' => 'Home',
-    'home_welcome' => 'Welcome to R2 Manager',
+    'home_welcome' => 'Welcome to R2Uploader',
     'home_subtitle' => 'Fast, secure, and efficient cloud storage service using Cloudflare R2.',
     'btn_go_to_upload' => 'Go to Upload Page',
     'btn_login_now' => 'Login to Start',
 
     // Login
-    'login_title' => 'R2 Manager Login',
+    'login_title' => 'R2Uploader Login',
     'username' => 'Username',
     'password' => 'Password',
     'btn_login' => 'Login',

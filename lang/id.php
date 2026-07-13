@@ -1,7 +1,7 @@
 <?php
 return [
     // General
-    'app_title' => 'R2 Manager',
+    'app_title' => 'R2Uploader',
     'save' => 'Simpan',
     'cancel' => 'Batal',
     'delete' => 'Hapus',
@@ -25,13 +25,13 @@ return [
 
     // Home
     'home_title' => 'Beranda',
-    'home_welcome' => 'Selamat Datang di R2 Manager',
+    'home_welcome' => 'Selamat Datang di R2Uploader',
     'home_subtitle' => 'Layanan penyimpanan awan menggunakan Cloudflare R2 yang cepat, aman, dan efisien.',
     'btn_go_to_upload' => 'Ke Halaman Upload',
     'btn_login_now' => 'Login untuk Mulai',
 
     // Login
-    'login_title' => 'Login R2 Manager',
+    'login_title' => 'Login R2Uploader',
     'username' => 'Nama Pengguna',
     'password' => 'Kata Sandi',
     'btn_login' => 'Masuk',

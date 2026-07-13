@@ -1,6 +1,6 @@
 <?php
 /**
- * R2 Uploader — Front Controller
+ * R2Uploader — Front Controller
  *
  * All HTTP requests are routed through this file.
  * Point your web server document root to this /public/ directory.

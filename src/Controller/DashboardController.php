@@ -62,10 +62,30 @@ class DashboardController extends BaseController
             }
         }
 
+        $rawDailyStats = $this->logger->getDailyActivityStats(7);
+        $dailyStats = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-$i days"));
+            $dailyStats[$date] = [
+                'log_date' => $date,
+                'uploads' => 0,
+                'deletions' => 0,
+            ];
+        }
+        foreach ($rawDailyStats as $row) {
+            $date = $row['log_date'];
+            if (isset($dailyStats[$date])) {
+                $dailyStats[$date]['uploads'] = (int)$row['uploads'];
+                $dailyStats[$date]['deletions'] = (int)$row['deletions'];
+            }
+        }
+        $dailyStats = array_values($dailyStats);
+
         $viewData = new DashboardViewData(
             $activities,
             $userStats,
             $r2Stats,
+            $dailyStats,
             $this->r2 !== null,
             $this->csrf->getToken()
         );

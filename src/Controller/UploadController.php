@@ -138,7 +138,8 @@ class UploadController extends BaseController
                 is_string($type) ? $type : null,
                 $pruneDeletedKeys,
                 $pruneKeptCount,
-                $this->config['folderMaxFiles']
+                $this->config['folderMaxFiles'],
+                $folder
             );
 
             // Render success

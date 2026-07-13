@@ -11,6 +11,7 @@ class DashboardViewData extends ViewData
     public array $userStats;
     /** @var array<string, array{type?: string, totalFiles?: int, totalSize?: string, error?: string}> */
     public array $r2Stats;
+    public array $dailyStats;
     public bool $isConfigured;
     public string $csrfToken;
 
@@ -18,12 +19,14 @@ class DashboardViewData extends ViewData
         array $activities,
         array $userStats,
         array $r2Stats,
+        array $dailyStats,
         bool $isConfigured,
         string $csrfToken = ''
     ) {
         $this->activities = $activities;
         $this->userStats = $userStats;
         $this->r2Stats = $r2Stats;
+        $this->dailyStats = $dailyStats;
         $this->isConfigured = $isConfigured;
         $this->csrfToken = $csrfToken;
     }

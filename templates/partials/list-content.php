@@ -63,6 +63,23 @@
     </label>
   </div>
 
+  <!-- Bulk Actions Bar -->
+  <div id="bulk-actions-bar" class="card" style="display: none; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; border-color: var(--accent); background: var(--accent-soft); flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
+      🗂️ <span id="bulk-selected-count">0</span> file terpilih
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button id="btn-bulk-download" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
+        <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        Unduh ZIP
+      </button>
+      <button id="btn-bulk-delete" class="btn btn-danger" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
+        <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        Hapus Terpilih
+      </button>
+    </div>
+  </div>
+
   <!-- Folders Container -->
   <h3 id="folder-title" style="display:none; font-size:0.85rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.75rem; font-weight:600; letter-spacing:0.05em;">📁 <?= __('folder') ?></h3>
   <div class="folder-grid" id="folder-grid">
@@ -76,6 +93,9 @@
     <table id="file-table">
       <thead>
         <tr>
+          <th style="width: 40px; text-align: center; vertical-align: middle;">
+            <input type="checkbox" id="select-all-checkbox" style="width: auto; cursor: pointer; transform: scale(1.15);">
+          </th>
           <th class="sortable-header" data-sort="name" style="cursor:pointer; user-select:none;">
             <?= __('file_name') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
           </th>

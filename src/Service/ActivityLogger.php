@@ -88,6 +88,22 @@ class ActivityLogger
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function getDailyActivityStats(int $days = 7): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                date(created_at) as log_date,
+                SUM(CASE WHEN action = 'upload' THEN 1 ELSE 0 END) as uploads,
+                SUM(CASE WHEN action = 'delete' THEN 1 ELSE 0 END) as deletions
+            FROM activity_log
+            WHERE created_at >= datetime('now', ?)
+            GROUP BY log_date
+            ORDER BY log_date ASC
+        ");
+        $stmt->execute(["-$days days"]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function clearAllActivity(): void
     {
         $this->db->exec("DELETE FROM activity_log");

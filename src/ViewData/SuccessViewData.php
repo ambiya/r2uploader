@@ -12,18 +12,21 @@ class SuccessViewData extends ViewData
     public array $pruneDeletedKeys;
     public ?int $pruneKeptCount;
     public int $folderMaxFiles;
+    public ?string $folder;
 
     public function __construct(
         array $successFiles,
         ?string $type,
         array $pruneDeletedKeys,
         ?int $pruneKeptCount,
-        int $folderMaxFiles
+        int $folderMaxFiles,
+        ?string $folder = null
     ) {
         $this->successFiles = $successFiles;
         $this->type = $type;
         $this->pruneDeletedKeys = $pruneDeletedKeys;
         $this->pruneKeptCount = $pruneKeptCount;
         $this->folderMaxFiles = $folderMaxFiles;
+        $this->folder = $folder;
     }
 }

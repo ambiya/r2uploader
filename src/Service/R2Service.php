@@ -245,4 +245,31 @@ class R2Service
             'largestFiles' => $largestFiles,
         ];
     }
+
+    /**
+     * Get an object from R2.
+     *
+     * @return array S3 result containing Body, ContentType, etc.
+     */
+    public function getObject(string $bucket, string $key): array
+    {
+        return $this->client->getObject([
+            'Bucket' => $bucket,
+            'Key' => $key,
+        ])->toArray();
+    }
+
+    /**
+     * Delete multiple objects from R2.
+     */
+    public function deleteObjects(string $bucket, array $keys): void
+    {
+        $objects = array_map(fn($key) => ['Key' => $key], $keys);
+        $this->client->deleteObjects([
+            'Bucket' => $bucket,
+            'Delete' => [
+                'Objects' => $objects,
+            ],
+        ]);
+    }
 }

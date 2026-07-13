@@ -18,14 +18,14 @@
 </head>
 <body>
   <header>
-    <div class="logo-container">
+    <a href="/" class="logo-container" style="text-decoration: none; color: inherit;">
       <div class="logo-icon" style="display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px; width: 1.75rem; height: 1.75rem; background: #fff;">
         <img src="/img/logo.svg" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
         <h1 class="title-text">Cloud R2 Manager</h1>
       </div>
-    </div>
+    </a>
     
     <div style="display:flex; align-items:center; gap:1rem;">
       <?php if (isset($_SESSION['user_id'])): ?>

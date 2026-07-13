@@ -284,6 +284,8 @@ class App
         $router->get('api_list', fn(Request $r) => $c->get('fileCtrl')->apiList($r), [$authMw]);
         $router->post('delete', fn(Request $r) => $c->get('fileCtrl')->delete($r), [$authMw, $csrfMw]);
         $router->post('rename', fn(Request $r) => $c->get('fileCtrl')->rename($r), [$authMw, $csrfMw]);
+        $router->post('bulk_delete', fn(Request $r) => $c->get('fileCtrl')->bulkDelete($r), [$authMw, $csrfMw]);
+        $router->post('bulk_download', fn(Request $r) => $c->get('fileCtrl')->bulkDownload($r), [$authMw, $csrfMw]);
 
         // --- Admin routes ---
         $router->get('dashboard', fn(Request $r) => $c->get('dashCtrl')->index(), [$adminMw]);

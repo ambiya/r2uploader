@@ -72,6 +72,7 @@
         let currentPageIndex = 0; // 0-based index
         let historyTokens = [null]; // Maps page index to continuation token
         let currentSearch = searchInput ? searchInput.value.trim() : '';
+        const selectedFiles = new Set();
 
         // Extract current URL params
         const urlParams = new URLSearchParams(window.location.search);
@@ -83,6 +84,37 @@
         let currentFlat = urlParams.get('flat') === '1' || localStorage.getItem('r2mgr_flat') === '1';
 
         if (flatViewCheckbox) flatViewCheckbox.checked = currentFlat;
+
+        const bulkBar = document.getElementById('bulk-actions-bar');
+        const selectedCountSpan = document.getElementById('bulk-selected-count');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+
+        function updateBulkActionsBar() {
+            if (!bulkBar || !selectedCountSpan) return;
+            if (selectedFiles.size > 0) {
+                bulkBar.style.display = 'flex';
+                selectedCountSpan.textContent = selectedFiles.size;
+            } else {
+                bulkBar.style.display = 'none';
+            }
+
+            const renderedCheckboxes = document.querySelectorAll('.file-select-checkbox');
+            if (renderedCheckboxes.length > 0) {
+                let allChecked = true;
+                renderedCheckboxes.forEach(cb => {
+                    if (!cb.checked) allChecked = false;
+                });
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = allChecked;
+                    selectAllCheckbox.disabled = false;
+                }
+            } else {
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.disabled = true;
+                }
+            }
+        }
 
         function updateSortIndicators() {
             sortableHeaders.forEach(th => {
@@ -104,6 +136,7 @@
         function renderFileRow(obj, publicUrl, type) {
             const fileUrl = publicUrl.replace(/\/$/, '') + '/' + obj.Key.replace(/^\//, '');
             const displayName = obj.Key.replace(prefixParam, '');
+            const isChecked = selectedFiles.has(obj.Key) ? 'checked' : '';
             
             const tr = document.createElement('tr');
             tr.className = 'file-row';
@@ -111,6 +144,9 @@
             const dateStr = obj.LastModified ? new Date(obj.LastModified).toLocaleString() : '-';
             
             tr.innerHTML = `
+              <td style="text-align: center; vertical-align: middle; width: 40px;">
+                <input type="checkbox" class="file-select-checkbox" data-key="${escapeHtml(obj.Key)}" ${isChecked} style="width: auto; cursor: pointer; transform: scale(1.1);">
+              </td>
               <td>
                 <div class="file-name-cell">
                   <span style="color:var(--accent);">
@@ -257,6 +293,8 @@
                         // For search, we just increment page. For normal, we need the token.
                         historyTokens[currentPageIndex + 1] = currentSearch ? null : data.nextToken;
                     }
+
+                    updateBulkActionsBar();
                 })
                 .catch(err => {
                     spinner.style.display = 'none';
@@ -361,6 +399,108 @@
                     updateUrlAndFetch();
                 }
             }
+        }
+
+        // Checkbox change via event delegation
+        fileTableBody.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('file-select-checkbox')) {
+                const key = e.target.dataset.key;
+                if (e.target.checked) {
+                    selectedFiles.add(key);
+                } else {
+                    selectedFiles.delete(key);
+                }
+                updateBulkActionsBar();
+            }
+        });
+
+        // Select All change
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checked = selectAllCheckbox.checked;
+                const checkboxes = document.querySelectorAll('.file-select-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = checked;
+                    const key = cb.dataset.key;
+                    if (checked) {
+                        selectedFiles.add(key);
+                    } else {
+                        selectedFiles.delete(key);
+                    }
+                });
+                updateBulkActionsBar();
+            });
+        }
+
+        // Bulk Delete Action
+        const btnBulkDelete = document.getElementById('btn-bulk-delete');
+        if (btnBulkDelete) {
+            btnBulkDelete.addEventListener('click', function() {
+                if (selectedFiles.size === 0) return;
+                
+                const confirmMsg = document.documentElement.lang === 'id' 
+                    ? `Apakah Anda yakin ingin menghapus ${selectedFiles.size} file terpilih?` 
+                    : `Are you sure you want to delete ${selectedFiles.size} selected file(s)?`;
+                
+                if (!confirm(confirmMsg)) return;
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/?action=bulk_delete&type=' + encodeURIComponent(typeParam);
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = window._csrfToken || '';
+                form.appendChild(csrfInput);
+
+                selectedFiles.forEach(key => {
+                    const keyInput = document.createElement('input');
+                    keyInput.type = 'hidden';
+                    keyInput.name = 'keys[]';
+                    keyInput.value = key;
+                    form.appendChild(keyInput);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+
+        // Bulk Download Action
+        const btnBulkDownload = document.getElementById('btn-bulk-download');
+        if (btnBulkDownload) {
+            btnBulkDownload.addEventListener('click', function() {
+                if (selectedFiles.size === 0) return;
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/?action=bulk_download&type=' + encodeURIComponent(typeParam);
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = window._csrfToken || '';
+                form.appendChild(csrfInput);
+
+                selectedFiles.forEach(key => {
+                    const keyInput = document.createElement('input');
+                    keyInput.type = 'hidden';
+                    keyInput.name = 'keys[]';
+                    keyInput.value = key;
+                    form.appendChild(keyInput);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+
+                // Reset state
+                selectedFiles.clear();
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                document.querySelectorAll('.file-select-checkbox').forEach(cb => cb.checked = false);
+                updateBulkActionsBar();
+            });
         }
 
         // Initial fetch

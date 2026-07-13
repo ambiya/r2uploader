@@ -299,5 +299,113 @@ class FileController extends BaseController
 
         return $this->redirect($redirectUrl);
     }
+
+    /**
+     * Handle bulk deletion.
+     * POST /?action=bulk_delete
+     *
+     * CSRF validated by CsrfMiddleware.
+     */
+    public function bulkDelete(Request $request): Response
+    {
+        $type = $request->query('type');
+        $keys = $request->post('keys');
+        $bucket = $this->bucketResolver->resolve($type);
+
+        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
+            throw HttpException::badRequest(__('err_invalid_request'));
+        }
+
+        foreach ($keys as $key) {
+            if (str_contains($key, '..')) {
+                throw HttpException::badRequest(__('err_path_traversal'));
+            }
+        }
+
+        $this->r2->deleteObjects($bucket['name'], $keys);
+
+        foreach ($keys as $key) {
+            $this->logger->log('delete', $bucket['name'], $key, null, 'Bulk deleted file');
+        }
+
+        $this->csrf->regenerate();
+
+        $prefix = '';
+        if (!empty($keys[0])) {
+            $prefix = dirname($keys[0]);
+            if ($prefix === '.') {
+                $prefix = '';
+            }
+        }
+
+        $redirectUrl = '/?action=list&type=' . urlencode((string) $type);
+        if ($prefix !== '') {
+            $redirectUrl .= '&prefix=' . urlencode($prefix . '/');
+        }
+
+        return $this->redirect($redirectUrl);
+    }
+
+    /**
+     * Handle bulk download (Zip on the fly).
+     * POST /?action=bulk_download
+     *
+     * CSRF validated by CsrfMiddleware.
+     */
+    public function bulkDownload(Request $request): Response
+    {
+        $type = $request->query('type');
+        $keys = $request->post('keys');
+        $bucket = $this->bucketResolver->resolve($type);
+
+        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
+            throw HttpException::badRequest(__('err_invalid_request'));
+        }
+
+        foreach ($keys as $key) {
+            if (str_contains($key, '..')) {
+                throw HttpException::badRequest(__('err_path_traversal'));
+            }
+        }
+
+        $tempDir = dirname(__DIR__, 2) . '/data';
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $zipFile = tempnam($tempDir, 'r2_bulk_');
+        if ($zipFile === false) {
+            throw new \RuntimeException('Gagal membuat file zip temporer.');
+        }
+        unlink($zipFile);
+        $zipFile .= '.zip';
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Gagal membuka file ZIP.');
+        }
+
+        foreach ($keys as $key) {
+            try {
+                $object = $this->r2->getObject($bucket['name'], $key);
+                $body = $object['Body'];
+                $content = (string)$body;
+                
+                $zip->addFromString(basename($key), $content);
+            } catch (\Exception $e) {
+                $zip->addFromString(basename($key) . '_error.txt', 'Gagal mengunduh file ini dari R2: ' . $e->getMessage());
+            }
+        }
+
+        $zip->close();
+
+        $zipContent = file_get_contents($zipFile);
+        unlink($zipFile);
+
+        return new Response(200, $zipContent, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="r2_download_' . date('Ymd_His') . '.zip"',
+            'Content-Length' => (string)strlen($zipContent),
+        ]);
+    }
 }
 

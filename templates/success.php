@@ -20,8 +20,14 @@
   </div>
 
   <div style="display:flex; justify-content:center; gap:1rem;">
-    <a href="/" class="btn btn-primary"><?= __('btn_back_home') ?></a>
-    <a href="/?action=list&type=<?= htmlspecialchars((string)$type) ?>" class="btn btn-secondary"><?= __('btn_view_files') ?></a>
+    <a href="/?action=upload" class="btn btn-primary"><?= __('btn_back_upload') ?></a>
+    <?php
+    $viewFilesUrl = '/?action=list&type=' . urlencode((string)$type);
+    if (!empty($folder)) {
+        $viewFilesUrl .= '&prefix=' . urlencode(rtrim($folder, '/') . '/');
+    }
+    ?>
+    <a href="<?= htmlspecialchars($viewFilesUrl) ?>" class="btn btn-secondary"><?= __('btn_view_files') ?></a>
   </div>
 </div>
 

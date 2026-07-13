@@ -1,6 +1,8 @@
 # R2Uploader
 
-PHP web app to upload and manage files in **Cloudflare R2** (S3-compatible API). Built with a browser UI for dynamic bucket management, role-based authentication (Admin, Editor), and public CDN URLs.
+A powerful Cloudflare R2 file manager built with PHP. Features include a dynamic browser UI, role-based authentication, multi-language support, and remote URL uploads.
+
+![R2Uploader Preview](preview.jpg)
 
 ## Features
 

@@ -23,7 +23,7 @@
         <img src="/img/logo.svg" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
       </div>
       <div>
-        <h1 class="title-text">Cloud R2 Manager</h1>
+        <h1 class="title-text"><?= __('app_title') ?></h1>
       </div>
     </a>
     

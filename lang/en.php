@@ -1,7 +1,7 @@
 <?php
 return [
     // General
-    'app_title' => 'Cloud R2 Uploader',
+    'app_title' => 'R2 Manager',
     'save' => 'Save',
     'cancel' => 'Cancel',
     'delete' => 'Delete',
@@ -110,6 +110,9 @@ return [
     'file_size' => '📦 File Size:',
     'btn_back_upload' => '📤 Back to Upload',
     'btn_view_files' => '📂 View Files',
+    'create_folder' => 'Create New Folder',
+    'folder_name' => 'Folder Name',
+    'btn_create' => 'Create',
     'auto_retention_title' => 'Auto-retention',
     'auto_retention_desc' => 'Folder contained too many files, so the system deleted <b>:deletedCount</b> old files and kept the <b>:maxFiles</b> newest files.',
     'view_deleted_files' => 'View deleted files',

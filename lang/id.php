@@ -1,7 +1,7 @@
 <?php
 return [
     // General
-    'app_title' => 'Cloud R2 Uploader',
+    'app_title' => 'R2 Manager',
     'save' => 'Simpan',
     'cancel' => 'Batal',
     'delete' => 'Hapus',
@@ -110,6 +110,9 @@ return [
     'file_size' => '📦 Ukuran File:',
     'btn_back_upload' => '📤 Kembali ke Upload',
     'btn_view_files' => '📂 Lihat Files',
+    'create_folder' => 'Buat Folder Baru',
+    'folder_name' => 'Nama Folder',
+    'btn_create' => 'Buat',
     'auto_retention_title' => 'Auto-retention',
     'auto_retention_desc' => 'Folder berisi terlalu banyak file, jadi sistem menghapus <b>:deletedCount</b> file lama dan menyisakan <b>:maxFiles</b> file terbaru.',
     'view_deleted_files' => 'Lihat file yang dihapus',

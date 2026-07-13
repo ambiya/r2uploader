@@ -10,6 +10,7 @@ use R2Uploader\Security\Csrf;
 use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2Service;
 use R2Uploader\Service\ActivityLogger;
+use R2Uploader\Service\R2FileIndexService;
 use R2Uploader\ViewData\ListViewData;
 
 /**
@@ -21,23 +22,31 @@ class FileController extends BaseController
     private Csrf $csrf;
     private BucketResolver $bucketResolver;
     private ActivityLogger $logger;
+    private R2FileIndexService $fileIndex;
 
     public function __construct(
         ?R2Service $r2,
         Csrf $csrf,
         BucketResolver $bucketResolver,
-        ActivityLogger $logger
+        ActivityLogger $logger,
+        R2FileIndexService $fileIndex
     ) {
         $this->r2             = $r2;
         $this->csrf           = $csrf;
         $this->bucketResolver = $bucketResolver;
         $this->logger         = $logger;
+        $this->fileIndex      = $fileIndex;
     }
 
     private function getFilteredAndSortedObjects(string $bucketName, string $prefix, string $search, bool $flat, string $sort, string $order, int $page, int $limit): array
     {
+        // Auto-sync if database index is empty for this bucket
+        if ($this->fileIndex->isEmpty($bucketName)) {
+            $this->fileIndex->syncBucket($bucketName, $this->r2);
+        }
+
         if ($search !== '' || $flat) {
-            $allObjects = $this->r2->listAllObjects($bucketName, $prefix);
+            $allObjects = $this->fileIndex->listAll($bucketName, $prefix);
             if ($search !== '') {
                 $allObjects = array_values(array_filter($allObjects, function($obj) use ($search) {
                     return stripos($obj['Key'], $search) !== false;
@@ -56,7 +65,7 @@ class FileController extends BaseController
                 'nextToken' => null,
             ];
         } else {
-            $allLevel = $this->r2->listAllInDirectory($bucketName, $prefix);
+            $allLevel = $this->fileIndex->listDirectory($bucketName, $prefix);
             $this->sortObjects($allLevel['objects'], $sort, $order);
             
             $offset = ($page - 1) * $limit;
@@ -240,6 +249,7 @@ class FileController extends BaseController
         }
 
         $this->r2->deleteObject($bucket['name'], $key);
+        $this->fileIndex->deleteObject($bucket['name'], $key);
         $this->logger->log('delete', $bucket['name'], $key, null, 'Deleted file');
 
         // Regenerate CSRF to prevent replay
@@ -283,6 +293,7 @@ class FileController extends BaseController
         if ($newKey !== $oldKey) {
             $this->r2->copyObject($bucket['name'], (string) $oldKey, $newKey);
             $this->r2->deleteObject($bucket['name'], (string) $oldKey);
+            $this->fileIndex->renameObject($bucket['name'], (string) $oldKey, $newKey);
             $this->logger->log('rename', $bucket['name'], $newKey, null, "Renamed from $oldKey");
         }
 
@@ -323,6 +334,7 @@ class FileController extends BaseController
         }
 
         $this->r2->deleteObjects($bucket['name'], $keys);
+        $this->fileIndex->deleteObjects($bucket['name'], $keys);
 
         foreach ($keys as $key) {
             $this->logger->log('delete', $bucket['name'], $key, null, 'Bulk deleted file');
@@ -406,6 +418,89 @@ class FileController extends BaseController
             'Content-Disposition' => 'attachment; filename="r2_download_' . date('Ymd_His') . '.zip"',
             'Content-Length' => (string)strlen($zipContent),
         ]);
+    }
+
+    /**
+     * Handle folder creation.
+     * POST /?action=create_folder
+     *
+     * CSRF validated by CsrfMiddleware.
+     */
+    public function createFolder(Request $request): Response
+    {
+        $type   = $request->query('type');
+        $prefix = (string) $request->query('prefix', '');
+        $folderName = (string) $request->post('folderName', '');
+
+        $buckets = $this->bucketResolver->all();
+        if (empty($type) && !empty($buckets)) {
+            $type = $this->bucketResolver->firstType();
+        }
+
+        $bucket = $this->bucketResolver->resolve($type);
+
+        if (!$this->r2 || !$bucket || empty($bucket['name'])) {
+            throw HttpException::badRequest(__('err_invalid_request'));
+        }
+
+        // Sanitize folder name
+        $folderName = preg_replace('/\.\.+/', '.', $folderName) ?? $folderName;
+        $folderName = str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '', $folderName);
+        $folderName = trim($folderName, '/ ');
+
+        if (empty($folderName)) {
+            throw HttpException::badRequest(__('err_invalid_request'));
+        }
+
+        // Path of new folder: prefix + folderName
+        $newPrefix = !empty($prefix) ? rtrim($prefix, '/') . '/' . $folderName : $folderName;
+        $newPrefix = rtrim($newPrefix, '/') . '/';
+
+        // Check path traversal
+        if (str_contains($newPrefix, '..')) {
+            throw HttpException::badRequest(__('err_path_traversal'));
+        }
+
+        $this->r2->createFolder($bucket['name'], $newPrefix);
+        $this->fileIndex->addObject($bucket['name'], $newPrefix, 0, date('Y-m-d H:i:s'), true);
+        $this->logger->log('create_folder', $bucket['name'], $newPrefix, null, 'Created empty folder');
+
+        $this->csrf->regenerate();
+
+        $redirectUrl = '/?action=list&type=' . urlencode((string) $type);
+        if (!empty($prefix)) {
+            $redirectUrl .= '&prefix=' . urlencode(rtrim($prefix, '/') . '/');
+        }
+
+        return $this->redirect($redirectUrl);
+    }
+
+    /**
+     * Trigger manual synchronization of the index database.
+     * POST /?action=sync_index
+     *
+     * CSRF validated by CsrfMiddleware.
+     */
+    public function syncIndex(Request $request): Response
+    {
+        $type = $request->query('type');
+        $buckets = $this->bucketResolver->all();
+        if (empty($type) && !empty($buckets)) {
+            $type = $this->bucketResolver->firstType();
+        }
+
+        $bucket = $this->bucketResolver->resolve($type);
+
+        if (!$this->r2 || !$bucket || empty($bucket['name'])) {
+            return Response::json(['error' => __('err_invalid_request')], 400);
+        }
+
+        try {
+            $this->fileIndex->syncBucket($bucket['name'], $this->r2);
+            return Response::json(['success' => true]);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], 500);
+        }
     }
 }
 

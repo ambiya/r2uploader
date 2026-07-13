@@ -41,16 +41,26 @@
       <svg style="width:1.5rem;height:1.5rem;color:var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
       <?= __('file_folder_list') ?>
     </h2>
-    <?php if (!empty($prefix)):
-      $backParts = explode('/', rtrim($prefix, '/'));
-      array_pop($backParts);
-      $parent = count($backParts) > 0 ? implode('/', $backParts) . '/' : '';
-    ?>
-      <a href="?action=list&type=<?= urlencode((string)$type) ?>&prefix=<?= urlencode($parent) ?>" class="btn btn-secondary">
-        <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        <?= __('back') ?>
-      </a>
-    <?php endif; ?>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <button id="btn-sync-bucket" class="btn btn-secondary" onclick="syncBucketIndex()" style="display:flex; align-items:center; gap:0.35rem;" title="Sinkronisasi database dengan R2">
+        <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Sync
+      </button>
+      <button class="btn btn-secondary" onclick="openCreateFolderModal()" style="display:flex; align-items:center; gap:0.35rem;">
+        <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0v8m0-8h8m-8 0H4"></path></svg>
+        <?= __('create_folder') ?>
+      </button>
+      <?php if (!empty($prefix)):
+        $backParts = explode('/', rtrim($prefix, '/'));
+        array_pop($backParts);
+        $parent = count($backParts) > 0 ? implode('/', $backParts) . '/' : '';
+      ?>
+        <a href="?action=list&type=<?= urlencode((string)$type) ?>&prefix=<?= urlencode($parent) ?>" class="btn btn-secondary" style="display:flex; align-items:center; gap:0.35rem;">
+          <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          <?= __('back') ?>
+        </a>
+      <?php endif; ?>
+    </div>
   </div>
 
   <!-- Search & Filter bar -->
@@ -153,6 +163,22 @@
     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
       <button type="button" class="btn btn-secondary" onclick="document.getElementById('rename-modal').close()"><?= __('cancel') ?></button>
       <button type="submit" class="btn btn-primary"><?= __('save') ?></button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Create Folder Modal -->
+<dialog id="create-folder-modal" class="card" style="width:90%; max-width:500px; padding:20px; border:1px solid var(--border); box-shadow:var(--shadow-lg); background-color:var(--bg-app); color:var(--text-main);">
+  <form id="create-folder-form" method="POST" action="/?action=create_folder&type=<?= urlencode((string)$type) ?>&prefix=<?= urlencode((string)$prefix) ?>">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+    <h3 style="margin-top:0; margin-bottom:15px;"><?= __('create_folder') ?></h3>
+    <div class="form-group">
+      <label for="folder-name-input"><?= __('folder_name') ?></label>
+      <input type="text" id="folder-name-input" name="folderName" required placeholder="Contoh: dokumen, images/2026">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('create-folder-modal').close()"><?= __('cancel') ?></button>
+      <button type="submit" class="btn btn-primary"><?= __('btn_create') ?></button>
     </div>
   </form>
 </dialog>

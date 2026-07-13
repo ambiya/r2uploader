@@ -17,6 +17,50 @@
         modal.showModal();
     };
 
+    window.openCreateFolderModal = function() {
+        const modal = document.getElementById('create-folder-modal');
+        const input = document.getElementById('folder-name-input');
+        if (!modal) return;
+        if (input) input.value = '';
+        modal.showModal();
+    };
+
+    window.syncBucketIndex = function() {
+        const btn = document.getElementById('btn-sync-bucket');
+        if (!btn) return;
+
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<svg style="width:1.1rem;height:1.1rem; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Syncing...`;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type') || '';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window._csrfToken || '';
+
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+
+        fetch('/?action=sync_index&type=' + encodeURIComponent(type), {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Sinkronisasi gagal: ' + (data.error || 'Terjadi kesalahan'));
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        })
+        .catch(err => {
+            alert('Sinkronisasi gagal: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        });
+    };
+
     // Search/Filter
     window.filterFiles = function(query) {
         const rows = document.querySelectorAll('.file-row');

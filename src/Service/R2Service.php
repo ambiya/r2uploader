@@ -272,4 +272,17 @@ class R2Service
             ],
         ]);
     }
+
+    /**
+     * Create an empty directory placeholder in R2.
+     */
+    public function createFolder(string $bucket, string $key): void
+    {
+        $this->client->putObject([
+            'Bucket' => $bucket,
+            'Key' => rtrim($key, '/') . '/',
+            'Body' => '',
+            'ContentType' => 'application/x-directory',
+        ]);
+    }
 }

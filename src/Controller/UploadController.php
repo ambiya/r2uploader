@@ -13,6 +13,7 @@ use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2Service;
 use R2Uploader\Service\RemoteDownloader;
 use R2Uploader\Service\ActivityLogger;
+use R2Uploader\Service\R2FileIndexService;
 use R2Uploader\ViewData\SuccessViewData;
 use R2Uploader\ViewData\UploadViewData;
 
@@ -27,19 +28,22 @@ class UploadController extends BaseController
     private ActivityLogger $logger;
     /** @var array<string, mixed> */
     private array $config;
+    private R2FileIndexService $fileIndex;
 
     public function __construct(
         ?R2Service $r2,
         Csrf $csrf,
         BucketResolver $bucketResolver,
         ActivityLogger $logger,
-        array $config
+        array $config,
+        R2FileIndexService $fileIndex
     ) {
         $this->r2             = $r2;
         $this->csrf           = $csrf;
         $this->bucketResolver = $bucketResolver;
         $this->logger         = $logger;
         $this->config         = $config;
+        $this->fileIndex      = $fileIndex;
     }
 
     /**
@@ -63,7 +67,7 @@ class UploadController extends BaseController
             $folderRetentionNote
         );
 
-        return $this->renderPage(__('app_title'), 'upload', $viewData, $this->csrf->getToken(), ['upload']);
+        return $this->renderPage(__('nav_upload'), 'upload', $viewData, $this->csrf->getToken(), ['upload']);
     }
 
     /**
@@ -107,6 +111,8 @@ class UploadController extends BaseController
                 $objectKey = !empty($folder) ? rtrim($folder, '/') . '/' . $fileData['fileName'] : $fileData['fileName'];
                 $this->r2->putObject($bucket['name'], $objectKey, $fileData['body'], $fileData['contentType'], $fileData['fileName']);
 
+                $this->fileIndex->addObject($bucket['name'], $objectKey, (int)($fileData['size'] ?? 0), date('Y-m-d H:i:s'));
+
                 $publicUrl = rtrim($bucket['publicUrl'], '/') . '/' . ltrim($objectKey, '/');
                 $successFiles[] = [
                     'publicUrl' => $publicUrl,
@@ -129,6 +135,10 @@ class UploadController extends BaseController
                 $folderPrefix = rtrim($folder, '/') . '/';
                 $pruneDeletedKeys = $retention->prune($bucket['name'], $folderPrefix);
                 $pruneKeptCount = $this->config['folderMaxFiles'];
+
+                if (!empty($pruneDeletedKeys)) {
+                    $this->fileIndex->deleteObjects($bucket['name'], $pruneDeletedKeys);
+                }
             }
 
 
@@ -185,6 +195,7 @@ class UploadController extends BaseController
             'body'        => $result['stream'],
             'contentType' => $result['contentType'],
             'fileSizeMB'  => $result['size'] !== null ? FileHelper::formatFileSize($result['size']) : 'Unknown',
+            'size'        => $result['size'] ?? 0,
         ]];
     }
 
@@ -256,6 +267,7 @@ class UploadController extends BaseController
                 'body'        => $tmpPath, // String path, handled by R2Service
                 'contentType' => $contentType,
                 'fileSizeMB'  => FileHelper::formatFileSize((int) $files['size'][$i]),
+                'size'        => (int) $files['size'][$i],
             ];
         }
 

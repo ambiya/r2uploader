@@ -178,6 +178,13 @@ class App
             return new CsrfMiddleware($c->get('csrf'));
         });
 
+        $c->set('fileIndex', function (Container $c) use ($dbPath) {
+            $pdo = new \PDO('sqlite:' . $dbPath);
+            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+            return new \R2Uploader\Service\R2FileIndexService($pdo);
+        });
+
         // Controllers
         $c->set('homeCtrl', fn() => new HomeController());
 
@@ -195,7 +202,8 @@ class App
                 $c->get('csrf'),
                 $c->get('bucketResolver'),
                 $c->get('logger'),
-                $config
+                $config,
+                $c->get('fileIndex')
             );
         });
 
@@ -204,7 +212,8 @@ class App
                 $c->get('r2'),
                 $c->get('csrf'),
                 $c->get('bucketResolver'),
-                $c->get('logger')
+                $c->get('logger'),
+                $c->get('fileIndex')
             );
         });
 
@@ -286,6 +295,8 @@ class App
         $router->post('rename', fn(Request $r) => $c->get('fileCtrl')->rename($r), [$authMw, $csrfMw]);
         $router->post('bulk_delete', fn(Request $r) => $c->get('fileCtrl')->bulkDelete($r), [$authMw, $csrfMw]);
         $router->post('bulk_download', fn(Request $r) => $c->get('fileCtrl')->bulkDownload($r), [$authMw, $csrfMw]);
+        $router->post('create_folder', fn(Request $r) => $c->get('fileCtrl')->createFolder($r), [$authMw, $csrfMw]);
+        $router->post('sync_index', fn(Request $r) => $c->get('fileCtrl')->syncIndex($r), [$authMw, $csrfMw]);
 
         // --- Admin routes ---
         $router->get('dashboard', fn(Request $r) => $c->get('dashCtrl')->index(), [$adminMw]);

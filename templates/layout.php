@@ -6,7 +6,21 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
   <title><?= htmlspecialchars($title) ?> - R2 Manager</title>
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
+  <link rel="apple-touch-icon" href="/img/logo.svg">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:image" content="/img/logo.svg">
+  <meta property="og:image:width" content="1024">
+  <meta property="og:image:height" content="1024">
+  <meta property="og:image:alt" content="Cloudflare R2 Uploader">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/img/logo.svg">
+  <meta name="twitter:image:alt" content="Cloudflare R2 Uploader">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

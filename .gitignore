@@ -21,3 +21,7 @@ Thumbs.db
 
 # Local tooling
 .antigravitycli/
+
+# Agents
+.agents
+skills-lock.json

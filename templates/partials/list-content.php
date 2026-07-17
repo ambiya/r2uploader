@@ -106,16 +106,16 @@
           <th style="width: 40px; text-align: center; vertical-align: middle;">
             <input type="checkbox" id="select-all-checkbox" style="width: auto; cursor: pointer; transform: scale(1.15);">
           </th>
-          <th class="sortable-header" data-sort="name" style="cursor:pointer; user-select:none;">
+          <th class="sortable-header" data-sort="name" style="cursor:pointer; user-select:none; min-width:200px;">
             <?= __('file_name') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
           </th>
-          <th class="sortable-header" data-sort="date" style="cursor:pointer; user-select:none;">
+          <th class="sortable-header" data-sort="date" style="cursor:pointer; user-select:none; white-space:nowrap;">
             <?= __('upload_date') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
           </th>
-          <th class="sortable-header" data-sort="size" style="cursor:pointer; user-select:none;">
+          <th class="sortable-header" data-sort="size" style="cursor:pointer; user-select:none; white-space:nowrap;">
             <?= __('size') ?> <span class="sort-indicator" style="font-size:0.8em; margin-left:2px; display:inline-block; width:10px;"></span>
           </th>
-          <th style="text-align:right;"><?= __('action') ?></th>
+          <th style="text-align:right; white-space:nowrap;"><?= __('action') ?></th>
         </tr>
       </thead>
       <tbody id="file-table-body">

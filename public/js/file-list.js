@@ -196,7 +196,7 @@
                   <span style="color:var(--accent);">
                     <svg style="width:1.25rem;height:1.25rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                   </span>
-                  <a href="${escapeHtml(fileUrl)}" class="file-link" target="_blank" style="word-break:break-all;">${escapeHtml(displayName)}</a>
+                  <a href="${escapeHtml(fileUrl)}" class="file-link" target="_blank" style="word-break: break-word; overflow-wrap: anywhere;">${escapeHtml(displayName)}</a>
                 </div>
               </td>
               <td><span style="color:var(--text-muted); font-size:0.85rem;">${escapeHtml(dateStr)}</span></td>

@@ -56,7 +56,7 @@
                 <ul style="list-style:none; padding:0; margin:0; font-size:0.85rem;">
                 <?php foreach ($stats['largestFiles'] as $lf): ?>
                     <li style="display:flex; justify-content:space-between; margin-bottom:0.5rem; border-bottom:1px solid var(--border-light); padding-bottom:0.25rem;">
-                        <span style="word-break:break-all; padding-right:0.5rem;" title="<?= htmlspecialchars($lf['Key']) ?>">
+                        <span style="word-break: break-word; overflow-wrap: anywhere; padding-right:0.5rem;" title="<?= htmlspecialchars($lf['Key']) ?>">
                            <?= htmlspecialchars(strlen($lf['Key']) > 25 ? substr($lf['Key'], 0, 12) . '...' . substr($lf['Key'], -10) : $lf['Key']) ?>
                         </span>
                         <strong style="white-space:nowrap; color:var(--danger);"><?= $lf['FormattedSize'] ?></strong>

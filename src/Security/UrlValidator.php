@@ -26,19 +26,19 @@ class UrlValidator
         $url = trim($url);
 
         if (empty($url)) {
-            throw new Exception('Format URL tidak valid.');
+            throw new Exception('Invalid URL format.');
         }
 
         $parsed = parse_url($url);
 
         if ($parsed === false || !isset($parsed['host'])) {
-            throw new Exception('Format URL tidak valid.');
+            throw new Exception('Invalid URL format.');
         }
 
         // Check scheme — must be http or https
         $scheme = strtolower($parsed['scheme'] ?? '');
         if (!in_array($scheme, ['http', 'https'], true)) {
-            throw new Exception('Protokol URL harus HTTP atau HTTPS.');
+            throw new Exception('URL protocol must be HTTP or HTTPS.');
         }
 
         $host = $parsed['host'];
@@ -46,19 +46,19 @@ class UrlValidator
         // Validate port
         $port = $parsed['port'] ?? ($scheme === 'https' ? 443 : 80);
         if (!in_array($port, [80, 443], true)) {
-            throw new Exception('Port URL harus 80 atau 443.');
+            throw new Exception('URL port must be 80 or 443.');
         }
 
         // Block all direct IPv6 addresses for strict IPv4-only resolution
         if (filter_var(trim($host, '[]'), FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
-            throw new Exception('Akses menggunakan IP address IPv6 secara langsung tidak diizinkan.');
+            throw new Exception('Direct IPv6 address access is not allowed.');
         }
 
         // Resolve hostname to IP addresses
         $ips = gethostbynamel($host);
 
         if ($ips === false || empty($ips)) {
-            throw new Exception('Host tidak dapat diresolve.');
+            throw new Exception('Host could not be resolved.');
         }
 
         // Validate each resolved IP against private/reserved ranges
@@ -71,7 +71,7 @@ class UrlValidator
             );
 
             if ($filtered === false) {
-                throw new Exception('Akses ke IP Private/Local tidak diizinkan.');
+                throw new Exception('Access to Private/Local IP is not allowed.');
             }
             $safeIp = $ip;
         }

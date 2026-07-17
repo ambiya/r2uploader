@@ -46,7 +46,7 @@ class App
     private function initTranslator(): void
     {
         $langPath = dirname(__DIR__) . '/lang';
-        $translator = new \R2Uploader\Service\Translator($langPath, 'id', 'en');
+        $translator = new \R2Uploader\Service\Translator($langPath, 'en', 'id');
         if (isset($_SESSION['lang'])) {
             $translator->setLocale($_SESSION['lang']);
         }
@@ -113,9 +113,8 @@ class App
         $c->set('configError', function (Container $c) {
             $config = $c->get('config');
             if (empty($config['accountId']) || empty($config['accessKeyId']) || empty($config['secretAccessKey'])) {
-                return 'Konfigurasi Cloudflare R2 belum lengkap di file <code>.env</code>. '
-                    . 'Pastikan Anda telah mengisi <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, '
-                    . 'dan <code>R2_SECRET_ACCESS_KEY</code>.';
+                return 'Cloudflare R2 configuration is incomplete in the <code>.env</code> file. '
+                    . 'Please fill in <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, and <code>R2_SECRET_ACCESS_KEY</code>.';
             }
             return '';
         });

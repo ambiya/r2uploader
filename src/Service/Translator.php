@@ -12,7 +12,7 @@ class Translator
     private array $messages = [];
     private string $langPath;
 
-    public function __construct(string $langPath, string $defaultLocale = 'id', string $fallbackLocale = 'en')
+    public function __construct(string $langPath, string $defaultLocale = 'en', string $fallbackLocale = 'id')
     {
         $this->langPath = $langPath;
         $this->currentLocale = $defaultLocale;

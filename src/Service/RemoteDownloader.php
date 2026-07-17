@@ -69,7 +69,7 @@ class RemoteDownloader
             $fp = @fopen($ipUrl, 'rb', false, $context);
             
             if ($fp === false) {
-                throw new Exception("Gagal membuka koneksi ke URL target.");
+                throw new Exception("Failed to open connection to target URL.");
             }
             
             $meta = stream_get_meta_data($fp);
@@ -96,11 +96,11 @@ class RemoteDownloader
                 
                 $redirectCount++;
                 if ($redirectCount > $maxRedirects) {
-                    throw new Exception('Terlalu banyak redirect.');
+                    throw new Exception('Too many redirects.');
                 }
                 
                 if (empty($redirectUrl)) {
-                    throw new Exception('Redirect tanpa Location header.');
+                    throw new Exception('Redirect without Location header.');
                 }
                 
                 // Handle relative redirects

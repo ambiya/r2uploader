@@ -100,7 +100,7 @@ class UserManager
         if ($user && $user['role'] === 'admin') {
             $adminCount = (int) $this->db->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
             if ($adminCount <= 1) {
-                throw new \RuntimeException("Tidak dapat menghapus admin terakhir.");
+                throw new \RuntimeException("Cannot delete the last admin.");
             }
         }
         

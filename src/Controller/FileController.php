@@ -402,14 +402,14 @@ class FileController extends BaseController
         }
         $zipFile = tempnam($tempDir, 'r2_bulk_');
         if ($zipFile === false) {
-            throw new \RuntimeException('Gagal membuat file zip temporer.');
+            throw new \RuntimeException('Failed to create temporary zip file.');
         }
         unlink($zipFile);
         $zipFile .= '.zip';
 
         $zip = new \ZipArchive();
         if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new \RuntimeException('Gagal membuka file ZIP.');
+            throw new \RuntimeException('Failed to open ZIP file.');
         }
 
         foreach ($keys as $key) {
@@ -420,7 +420,7 @@ class FileController extends BaseController
                 
                 $zip->addFromString(basename($key), $content);
             } catch (\Exception $e) {
-                $zip->addFromString(basename($key) . '_error.txt', 'Gagal mengunduh file ini dari R2: ' . $e->getMessage());
+                $zip->addFromString(basename($key) . '_error.txt', 'Failed to download this file from R2: ' . $e->getMessage());
             }
         }
 

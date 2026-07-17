@@ -75,7 +75,7 @@ class Router
         }
 
         // No route matched
-        return Response::html('Halaman tidak ditemukan.', 404);
+        return Response::html('Page not found.', 404);
     }
 
     /**

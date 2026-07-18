@@ -42,7 +42,7 @@
       <?= __('file_folder_list') ?>
     </h2>
     <div style="display:flex; gap:0.5rem; align-items:center;">
-      <button id="btn-sync-bucket" class="btn btn-secondary" onclick="syncBucketIndex()" style="display:flex; align-items:center; gap:0.35rem;" title="Sinkronisasi database dengan R2">
+      <button id="btn-sync-bucket" class="btn btn-secondary" onclick="syncBucketIndex()" style="display:flex; align-items:center; gap:0.35rem;" title="Sync database with R2">
         <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         Sync
       </button>

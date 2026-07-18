@@ -50,11 +50,11 @@
 
         btn.disabled = true;
         spinner.style.display = 'inline-block';
-        btnText.innerText = mode === 'manual' ? 'Sedang mengunggah…' : 'Sedang mengunduh…';
+        btnText.innerText = mode === 'manual' ? 'Uploading…' : 'Downloading…';
 
         if (helper) {
             helper.style.display = 'block';
-            helper.innerText = 'Jangan tutup halaman ini sampai proses selesai.';
+            helper.innerText = 'Do not close this page until the process is complete.';
         }
     };
 
@@ -163,11 +163,11 @@
                         try {
                             const res = JSON.parse(xhr.responseText);
                             if (res.success) {
-                                if (window.showToast) window.showToast('Upload berhasil!', 'success');
+                                if (window.showToast) window.showToast('Upload successful!', 'success');
                                 // Fallback to reload if JSON success
                                 window.location.reload();
                             } else {
-                                if (window.showToast) window.showToast(res.error || 'Terjadi kesalahan.', 'error');
+                                if (window.showToast) window.showToast(res.error || 'An error occurred.', 'error');
                             }
                         } catch (e) {
                             // If response is not JSON, it might be the HTML success page.
@@ -184,7 +184,7 @@
                                 return;
                             }
                         } catch(e) {}
-                        if (window.showToast) window.showToast(`Error: ${xhr.statusText || 'Gagal mengupload.'}`, 'error');
+                        if (window.showToast) window.showToast(`Error: ${xhr.statusText || 'Failed to upload.'}`, 'error');
                     }
                 };
 
@@ -194,7 +194,7 @@
                         progressContainer.style.display = 'none';
                         progressText.style.display = 'none';
                     }
-                    if (window.showToast) window.showToast('Gagal terhubung ke server.', 'error');
+                    if (window.showToast) window.showToast('Failed to connect to server.', 'error');
                 };
 
                 xhr.send(formData);

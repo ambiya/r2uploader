@@ -54,9 +54,9 @@
     // Copy to clipboard
     window.copyToClipboard = function (text) {
         navigator.clipboard.writeText(text).then(() => {
-            showToast('Link disalin ke clipboard!');
+            showToast('Link copied to clipboard!');
         }).catch(err => {
-            console.error('Gagal menyalin: ', err);
+            console.error('Failed to copy: ', err);
         });
     };
 })();

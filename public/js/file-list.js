@@ -49,13 +49,13 @@
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Sinkronisasi gagal: ' + (data.error || 'Terjadi kesalahan'));
+                alert('Sync failed: ' + (data.error || 'An error occurred'));
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
             }
         })
         .catch(err => {
-            alert('Sinkronisasi gagal: ' + err.message);
+            alert('Sync failed: ' + err.message);
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         });
@@ -342,7 +342,7 @@
                 })
                 .catch(err => {
                     spinner.style.display = 'none';
-                    searchEmptyState.textContent = 'Gagal memuat data.';
+                    searchEmptyState.textContent = 'Failed to load data.';
                     searchEmptyState.style.display = 'block';
                     console.error(err);
                 });

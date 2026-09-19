@@ -59,4 +59,63 @@
             console.error('Failed to copy: ', err);
         });
     };
+
+    /**
+     * Formats UTC date/time string or timestamp into the user's browser local time.
+     * Option 2: 'DD MMM YYYY, HH:mm:ss' (24-hour time), e.g. '17 Sep 2026, 21:45:16'.
+     * Handles SQLite 'YYYY-MM-DD HH:MM:SS' strings, ISO strings, timestamps, etc.
+     */
+    window.formatLocalDateTime = function (dateInput, options) {
+        if (!dateInput || dateInput === '-') return '-';
+        let str = String(dateInput).trim();
+        if (!str || str === '-') return '-';
+
+        // Treat SQLite UTC format "YYYY-MM-DD HH:MM:SS" as ISO UTC with trailing Z
+        if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(str)) {
+            str = str.replace(' ', 'T') + 'Z';
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+            // Plain date string: parse as local date
+            str = str + 'T00:00:00';
+        }
+
+        const d = new Date(str);
+        if (isNaN(d.getTime())) return dateInput;
+
+        const defaultOptions = {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+
+        const activeLang = document.documentElement.lang || 'id';
+        const locale = activeLang === 'id' ? 'id-ID' : 'en-GB';
+
+        const formatted = d.toLocaleString(locale, options || defaultOptions);
+        // Normalize time delimiter dots to colons for standard digital clock format (e.g. 21.45.16 -> 21:45:16)
+        return formatted.replace(/(\d{2})\.(\d{2})\.(\d{2})/, '$1:$2:$3');
+    };
+
+    /**
+     * Automatically scan and update all elements with [data-utc] to local browser time.
+     */
+    window.initLocalDates = function (root = document) {
+        root.querySelectorAll('[data-utc]').forEach(el => {
+            const utc = el.getAttribute('data-utc');
+            if (utc && utc !== '-') {
+                el.title = utc + ' UTC';
+                el.textContent = window.formatLocalDateTime(utc);
+            }
+        });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => window.initLocalDates());
+    } else {
+        window.initLocalDates();
+    }
 })();
+

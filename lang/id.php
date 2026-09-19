@@ -193,4 +193,13 @@ return [
     'placeholder_new_bucket_slug' => 'Contoh: new-bucket',
     'placeholder_new_bucket_name' => 'Contoh: r2-bucket-name',
     'placeholder_new_bucket_url' => 'Contoh: https://domain.com',
+
+    // Per-Bucket Custom Credentials
+    'custom_credentials' => 'Kredensial API Khusus (Opsional)',
+    'custom_credentials_desc' => 'Biarkan kosong untuk menggunakan kredensial global Cloudflare R2.',
+    'custom_account_id' => 'Account ID',
+    'custom_access_key' => 'Access Key ID',
+    'custom_secret_key' => 'Secret Access Key',
+    'custom_credentials_active' => 'Kredensial Khusus Aktif',
+    'placeholder_keep_secret' => '•••••••••••••••• (Tersimpan - kosongkan jika tetap)',
 ];

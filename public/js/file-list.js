@@ -185,7 +185,7 @@
             const tr = document.createElement('tr');
             tr.className = 'file-row';
             
-            const dateStr = obj.LastModified ? new Date(obj.LastModified).toLocaleString() : '-';
+            const dateStr = window.formatLocalDateTime ? window.formatLocalDateTime(obj.LastModified) : (obj.LastModified ? new Date(obj.LastModified).toLocaleString() : '-');
             
             tr.innerHTML = `
               <td style="text-align: center; vertical-align: middle; width: 40px;">

@@ -43,8 +43,8 @@
               <?= strtoupper(htmlspecialchars($user['role'])) ?>
             </span>
           </td>
-          <td style="color:var(--text-muted); font-size:0.9rem;"><?= htmlspecialchars($user['created_at']) ?></td>
-          <td style="color:var(--text-muted); font-size:0.9rem;"><?= htmlspecialchars($user['last_login'] ?: '-') ?></td>
+          <td class="local-datetime" data-utc="<?= htmlspecialchars($user['created_at']) ?>" style="color:var(--text-muted); font-size:0.9rem;"><?= htmlspecialchars($user['created_at']) ?></td>
+          <td class="local-datetime" data-utc="<?= htmlspecialchars($user['last_login'] ?? '') ?>" style="color:var(--text-muted); font-size:0.9rem;"><?= htmlspecialchars($user['last_login'] ?: '-') ?></td>
           <td style="text-align:right;">
             <button class="btn btn-secondary" onclick="editUser(<?= $user['id'] ?>, '<?= htmlspecialchars(addslashes($user['username']), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars($user['role']) ?>')" style="padding:0.4rem 0.65rem;" title="<?= __('title_edit') ?>">
               <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>

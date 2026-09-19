@@ -193,4 +193,13 @@ return [
     'placeholder_new_bucket_slug' => 'Example: new-bucket',
     'placeholder_new_bucket_name' => 'Example: r2-bucket-name',
     'placeholder_new_bucket_url' => 'Example: https://domain.com',
+
+    // Per-Bucket Custom Credentials
+    'custom_credentials' => 'Custom API Credentials (Optional)',
+    'custom_credentials_desc' => 'Leave empty to use global Cloudflare R2 credentials.',
+    'custom_account_id' => 'Account ID',
+    'custom_access_key' => 'Access Key ID',
+    'custom_secret_key' => 'Secret Access Key',
+    'custom_credentials_active' => 'Custom Credentials Active',
+    'placeholder_keep_secret' => '•••••••••••••••• (Saved - leave empty to keep)',
 ];

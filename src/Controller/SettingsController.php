@@ -79,6 +79,8 @@ class SettingsController extends BaseController
 
             // R2 Buckets Dynamic Configuration
             $postedBuckets = $request->post('buckets', []);
+            $existingBucketsJson = $this->settings->get('R2_BUCKETS');
+            $existingBuckets = !empty($existingBucketsJson) ? (json_decode((string)$existingBucketsJson, true) ?? []) : ($this->config['buckets'] ?? []);
             $buckets = [];
             if (is_array($postedBuckets)) {
                 foreach ($postedBuckets as $item) {
@@ -89,10 +91,28 @@ class SettingsController extends BaseController
                     if ($key !== '' && $name !== '') {
                         $key = preg_replace('/[^a-zA-Z0-9_\-]/', '', $key);
                         if ($key !== '') {
-                            $buckets[$key] = [
+                            $bucketData = [
                                 'name'      => $name,
                                 'publicUrl' => $publicUrl,
                             ];
+
+                            $customAccountId = trim((string)($item['accountId'] ?? ''));
+                            $customAccessKey = trim((string)($item['accessKeyId'] ?? ''));
+                            $customSecretKey = (string)($item['secretAccessKey'] ?? '');
+
+                            // Custom credentials per bucket (if account ID or access key is provided)
+                            if ($customAccountId !== '' || $customAccessKey !== '') {
+                                $bucketData['accountId']   = $customAccountId;
+                                $bucketData['accessKeyId'] = $customAccessKey;
+
+                                if ($customSecretKey !== '') {
+                                    $bucketData['secretAccessKey'] = $customSecretKey;
+                                } elseif (!empty($existingBuckets[$key]['secretAccessKey'])) {
+                                    $bucketData['secretAccessKey'] = (string) $existingBuckets[$key]['secretAccessKey'];
+                                }
+                            }
+
+                            $buckets[$key] = $bucketData;
                         }
                     }
                 }

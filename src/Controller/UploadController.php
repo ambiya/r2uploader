@@ -10,6 +10,7 @@ use R2Uploader\Http\Exception\HttpException;
 use R2Uploader\Security\Csrf;
 use R2Uploader\Service\AutoRetention;
 use R2Uploader\Service\BucketResolver;
+use R2Uploader\Service\R2ClientFactory;
 use R2Uploader\Service\R2Service;
 use R2Uploader\Service\RemoteDownloader;
 use R2Uploader\Service\ActivityLogger;
@@ -22,7 +23,7 @@ use R2Uploader\ViewData\UploadViewData;
  */
 class UploadController extends BaseController
 {
-    private ?R2Service $r2;
+    private R2ClientFactory $r2ClientFactory;
     private Csrf $csrf;
     private BucketResolver $bucketResolver;
     private ActivityLogger $logger;
@@ -31,19 +32,19 @@ class UploadController extends BaseController
     private R2FileIndexService $fileIndex;
 
     public function __construct(
-        ?R2Service $r2,
+        R2ClientFactory $r2ClientFactory,
         Csrf $csrf,
         BucketResolver $bucketResolver,
         ActivityLogger $logger,
         array $config,
         R2FileIndexService $fileIndex
     ) {
-        $this->r2             = $r2;
-        $this->csrf           = $csrf;
-        $this->bucketResolver = $bucketResolver;
-        $this->logger         = $logger;
-        $this->config         = $config;
-        $this->fileIndex      = $fileIndex;
+        $this->r2ClientFactory = $r2ClientFactory;
+        $this->csrf            = $csrf;
+        $this->bucketResolver  = $bucketResolver;
+        $this->logger          = $logger;
+        $this->config          = $config;
+        $this->fileIndex       = $fileIndex;
     }
 
     /**
@@ -62,7 +63,7 @@ class UploadController extends BaseController
         $viewData = new UploadViewData(
             $this->csrf->getToken(),
             $this->config['configError'] ?? '',
-            $this->r2 !== null,
+            $this->r2ClientFactory->hasAnyValidConfiguration(),
             $buckets,
             $folderRetentionNote
         );
@@ -80,8 +81,9 @@ class UploadController extends BaseController
     {
         $type   = $request->post('type');
         $bucket = $this->bucketResolver->resolve($type);
+        $r2     = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name'])) {
+        if (!$r2 || !$bucket || empty($bucket['name'])) {
             throw HttpException::badRequest(__('err_r2_bucket_not_found'));
         }
 
@@ -109,7 +111,7 @@ class UploadController extends BaseController
             $successFiles = [];
             foreach ($uploadedFiles as $fileData) {
                 $objectKey = !empty($folder) ? rtrim($folder, '/') . '/' . $fileData['fileName'] : $fileData['fileName'];
-                $this->r2->putObject($bucket['name'], $objectKey, $fileData['body'], $fileData['contentType'], $fileData['fileName']);
+                $r2->putObject($bucket['name'], $objectKey, $fileData['body'], $fileData['contentType'], $fileData['fileName']);
 
                 $this->fileIndex->addObject($bucket['name'], $objectKey, (int)($fileData['size'] ?? 0), date('Y-m-d H:i:s'));
 
@@ -131,7 +133,7 @@ class UploadController extends BaseController
             $pruneKeptCount = null;
 
             if ($this->config['folderMaxFiles'] > 0 && !empty($folder)) {
-                $retention = new AutoRetention($this->r2, $this->config['folderMaxFiles']);
+                $retention = new AutoRetention($r2, $this->config['folderMaxFiles']);
                 $folderPrefix = rtrim($folder, '/') . '/';
                 $pruneDeletedKeys = $retention->prune($bucket['name'], $folderPrefix);
                 $pruneKeptCount = $this->config['folderMaxFiles'];

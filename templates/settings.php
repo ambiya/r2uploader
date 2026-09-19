@@ -97,22 +97,55 @@
         $buckets = $config['buckets'] ?? [];
         $idx = 0;
         foreach ($buckets as $key => $bucket):
+          $hasCustomCreds = !empty($bucket['accountId']) || !empty($bucket['accessKeyId']);
         ?>
-          <div class="bucket-row" data-idx="<?= $idx ?>" style="display: grid; grid-template-columns: 1.2fr 1.8fr 2.5fr auto; gap: 1rem; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px dotted var(--border-light);">
-            <div>
-              <input type="text" name="buckets[<?= $idx ?>][key]" placeholder="<?= __('placeholder_bucket_slug') ?>" value="<?= htmlspecialchars((string)$key) ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\-]+$">
+          <div class="bucket-row" data-idx="<?= $idx ?>" style="padding-bottom: 0.85rem; border-bottom: 1px dotted var(--border-light);">
+            <div class="bucket-main-inputs" style="display: grid; grid-template-columns: 1.2fr 1.8fr 2.5fr auto; gap: 1rem; align-items: center;">
+              <div>
+                <input type="text" name="buckets[<?= $idx ?>][key]" placeholder="<?= __('placeholder_bucket_slug') ?>" value="<?= htmlspecialchars((string)$key) ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\-]+$">
+              </div>
+              <div>
+                <input type="text" name="buckets[<?= $idx ?>][name]" placeholder="<?= __('placeholder_bucket_name') ?>" value="<?= htmlspecialchars($bucket['name'] ?? '') ?>" required style="margin-bottom:0;">
+              </div>
+              <div>
+                <input type="url" name="buckets[<?= $idx ?>][publicUrl]" placeholder="<?= __('placeholder_bucket_url') ?>" value="<?= htmlspecialchars($bucket['publicUrl'] ?? '') ?>" required style="margin-bottom:0;">
+              </div>
+              <div style="text-align: center;">
+                <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
+                  <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
             </div>
-            <div>
-              <input type="text" name="buckets[<?= $idx ?>][name]" placeholder="<?= __('placeholder_bucket_name') ?>" value="<?= htmlspecialchars($bucket['name'] ?? '') ?>" required style="margin-bottom:0;">
-            </div>
-            <div>
-              <input type="url" name="buckets[<?= $idx ?>][publicUrl]" placeholder="<?= __('placeholder_bucket_url') ?>" value="<?= htmlspecialchars($bucket['publicUrl'] ?? '') ?>" required style="margin-bottom:0;">
-            </div>
-            <div style="text-align: center;">
-              <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
-                <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-              </button>
-            </div>
+
+            <!-- Custom API Credentials Drawer -->
+            <details class="bucket-creds-details" <?= $hasCustomCreds ? 'open' : '' ?> style="margin-top: 0.5rem; background: var(--bg-alt); border: 1px solid var(--border-light); border-radius: 6px; padding: 0.5rem 0.75rem;">
+              <summary style="font-size: 0.8rem; font-weight: 500; cursor: pointer; color: var(--accent); display: flex; align-items: center; gap: 0.4rem;">
+                <svg style="width: 0.95rem; height: 0.95rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                <span><?= __('custom_credentials') ?></span>
+                <?php if ($hasCustomCreds): ?>
+                  <span style="font-size: 0.7rem; background: var(--accent); color: #fff; padding: 0.1rem 0.45rem; border-radius: 9999px; margin-left: 0.25rem;">
+                    <?= __('custom_credentials_active') ?>
+                  </span>
+                <?php endif; ?>
+              </summary>
+              <div class="bucket-creds-grid" style="margin-top: 0.65rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_account_id') ?></label>
+                  <input type="text" name="buckets[<?= $idx ?>][accountId]" placeholder="Account ID" value="<?= htmlspecialchars($bucket['accountId'] ?? '') ?>" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_access_key') ?></label>
+                  <input type="text" name="buckets[<?= $idx ?>][accessKeyId]" placeholder="Access Key ID" value="<?= htmlspecialchars($bucket['accessKeyId'] ?? '') ?>" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_secret_key') ?></label>
+                  <input type="password" name="buckets[<?= $idx ?>][secretAccessKey]" placeholder="<?= !empty($bucket['secretAccessKey']) ? __('placeholder_keep_secret') : 'Secret Access Key' ?>" value="" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+                </div>
+              </div>
+              <p style="margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--text-muted);">
+                <?= __('custom_credentials_desc') ?>
+              </p>
+            </details>
           </div>
         <?php
           $idx++;
@@ -142,29 +175,51 @@ function addBucketRow() {
     const container = document.getElementById('buckets-container');
     const row = document.createElement('div');
     row.className = 'bucket-row';
-    row.style.display = 'grid';
-    row.style.gridTemplateColumns = '1.2fr 1.8fr 2.5fr auto';
-    row.style.gap = '1rem';
-    row.style.alignItems = 'center';
-    row.style.paddingBottom = '0.75rem';
+    row.style.paddingBottom = '0.85rem';
     row.style.borderBottom = '1px dotted var(--border-light)';
     row.dataset.idx = bucketIdx;
 
     row.innerHTML = `
-        <div>
-          <input type="text" name="buckets[${bucketIdx}][key]" placeholder="<?= __('placeholder_new_bucket_slug') ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\\-]+$">
+        <div class="bucket-main-inputs" style="display: grid; grid-template-columns: 1.2fr 1.8fr 2.5fr auto; gap: 1rem; align-items: center;">
+          <div>
+            <input type="text" name="buckets[${bucketIdx}][key]" placeholder="<?= __('placeholder_new_bucket_slug') ?>" required style="margin-bottom:0;" pattern="^[a-zA-Z0-9_\\-]+$">
+          </div>
+          <div>
+            <input type="text" name="buckets[${bucketIdx}][name]" placeholder="<?= __('placeholder_new_bucket_name') ?>" required style="margin-bottom:0;">
+          </div>
+          <div>
+            <input type="url" name="buckets[${bucketIdx}][publicUrl]" placeholder="<?= __('placeholder_new_bucket_url') ?>" required style="margin-bottom:0;">
+          </div>
+          <div style="text-align: center;">
+            <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
+              <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+          </div>
         </div>
-        <div>
-          <input type="text" name="buckets[${bucketIdx}][name]" placeholder="<?= __('placeholder_new_bucket_name') ?>" required style="margin-bottom:0;">
-        </div>
-        <div>
-          <input type="url" name="buckets[${bucketIdx}][publicUrl]" placeholder="<?= __('placeholder_new_bucket_url') ?>" required style="margin-bottom:0;">
-        </div>
-        <div style="text-align: center;">
-          <button type="button" class="btn btn-danger" onclick="removeBucketRow(this)" style="padding: 0.4rem 0.65rem;" title="<?= __('title_delete_bucket') ?>">
-            <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-          </button>
-        </div>
+
+        <details class="bucket-creds-details" style="margin-top: 0.5rem; background: var(--bg-alt); border: 1px solid var(--border-light); border-radius: 6px; padding: 0.5rem 0.75rem;">
+          <summary style="font-size: 0.8rem; font-weight: 500; cursor: pointer; color: var(--accent); display: flex; align-items: center; gap: 0.4rem;">
+            <svg style="width: 0.95rem; height: 0.95rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+            <span><?= __('custom_credentials') ?></span>
+          </summary>
+          <div class="bucket-creds-grid" style="margin-top: 0.65rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_account_id') ?></label>
+              <input type="text" name="buckets[${bucketIdx}][accountId]" placeholder="Account ID" value="" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_access_key') ?></label>
+              <input type="text" name="buckets[${bucketIdx}][accessKeyId]" placeholder="Access Key ID" value="" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; display: block;"><?= __('custom_secret_key') ?></label>
+              <input type="password" name="buckets[${bucketIdx}][secretAccessKey]" placeholder="Secret Access Key" value="" style="font-size: 0.82rem; padding: 0.4rem 0.6rem; margin-bottom: 0;">
+            </div>
+          </div>
+          <p style="margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--text-muted);">
+            <?= __('custom_credentials_desc') ?>
+          </p>
+        </details>
     `;
     container.appendChild(row);
     bucketIdx++;
@@ -183,14 +238,17 @@ function removeBucketRow(button) {
     .bucket-header {
       display: none !important;
     }
-    .bucket-row {
+    .bucket-main-inputs {
       grid-template-columns: 1fr !important;
       gap: 0.5rem !important;
-      padding-bottom: 1rem !important;
     }
-    .bucket-row div:last-child {
+    .bucket-main-inputs div:last-child {
       text-align: right !important;
       margin-top: 0.25rem;
+    }
+    .bucket-creds-grid {
+      grid-template-columns: 1fr !important;
+      gap: 0.5rem !important;
     }
   }
 </style>

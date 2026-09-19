@@ -11,11 +11,11 @@ namespace R2Uploader\Service;
  */
 class BucketResolver
 {
-    /** @var array<string, array{name: string, publicUrl: string}> */
+    /** @var array<string, array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}> */
     private array $buckets;
 
     /**
-     * @param array<string, array{name: string, publicUrl: string}> $buckets
+     * @param array<string, array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}> $buckets
      */
     public function __construct(array $buckets)
     {
@@ -25,7 +25,7 @@ class BucketResolver
     /**
      * Resolve bucket config for a given type.
      *
-     * @return array{name: string, publicUrl: string}|null
+     * @return array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}|null
      */
     public function resolve(?string $type): ?array
     {
@@ -36,9 +36,24 @@ class BucketResolver
     }
 
     /**
+     * Resolve bucket config by physical bucket name.
+     *
+     * @return array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}|null
+     */
+    public function resolveByName(string $name): ?array
+    {
+        foreach ($this->buckets as $bucket) {
+            if (($bucket['name'] ?? '') === $name) {
+                return $bucket;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get all configured buckets.
      *
-     * @return array<string, array{name: string, publicUrl: string}>
+     * @return array<string, array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}>
      */
     public function all(): array
     {

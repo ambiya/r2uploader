@@ -179,7 +179,7 @@
           <li style="margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border-light);">
             <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
               <strong><?= htmlspecialchars($log['username'] ?? 'System') ?></strong>
-              <span style="color:var(--text-muted); font-size:0.8rem;"><?= $log['created_at'] ?></span>
+              <span class="local-datetime" data-utc="<?= htmlspecialchars($log['created_at']) ?>" style="color:var(--text-muted); font-size:0.8rem;"><?= htmlspecialchars($log['created_at']) ?></span>
             </div>
             <div style="font-size:0.9rem;">
               <?php if ($log['action'] === 'upload'): ?>
@@ -273,9 +273,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const trendsCanvas = document.getElementById('weekly-trends-chart');
     if (trendsCanvas) {
         const rawTrendsData = JSON.parse(trendsCanvas.getAttribute('data-chart-data') || '[]');
+        const activeLang = document.documentElement.lang || 'id';
+        const chartLocale = activeLang === 'id' ? 'id-ID' : 'en-GB';
         const labels = rawTrendsData.map(item => {
-            const d = new Date(item.log_date);
-            return d.toLocaleDateString(document.documentElement.lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' });
+            const d = new Date(item.log_date + 'T00:00:00');
+            return d.toLocaleDateString(chartLocale, { day: 'numeric', month: 'short' });
         });
         const uploadData = rawTrendsData.map(item => item.uploads);
         const deleteData = rawTrendsData.map(item => item.deletions);

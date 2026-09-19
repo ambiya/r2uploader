@@ -8,6 +8,7 @@ use R2Uploader\Http\Response;
 use R2Uploader\Http\Exception\HttpException;
 use R2Uploader\Security\Csrf;
 use R2Uploader\Service\BucketResolver;
+use R2Uploader\Service\R2ClientFactory;
 use R2Uploader\Service\R2Service;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\R2FileIndexService;
@@ -18,31 +19,31 @@ use R2Uploader\ViewData\ListViewData;
  */
 class FileController extends BaseController
 {
-    private ?R2Service $r2;
+    private R2ClientFactory $r2ClientFactory;
     private Csrf $csrf;
     private BucketResolver $bucketResolver;
     private ActivityLogger $logger;
     private R2FileIndexService $fileIndex;
 
     public function __construct(
-        ?R2Service $r2,
+        R2ClientFactory $r2ClientFactory,
         Csrf $csrf,
         BucketResolver $bucketResolver,
         ActivityLogger $logger,
         R2FileIndexService $fileIndex
     ) {
-        $this->r2             = $r2;
-        $this->csrf           = $csrf;
-        $this->bucketResolver = $bucketResolver;
-        $this->logger         = $logger;
-        $this->fileIndex      = $fileIndex;
+        $this->r2ClientFactory = $r2ClientFactory;
+        $this->csrf            = $csrf;
+        $this->bucketResolver  = $bucketResolver;
+        $this->logger          = $logger;
+        $this->fileIndex       = $fileIndex;
     }
 
-    private function getFilteredAndSortedObjects(string $bucketName, string $prefix, string $search, bool $flat, string $sort, string $order, int $page, int $limit): array
+    private function getFilteredAndSortedObjects(string $bucketName, string $prefix, string $search, bool $flat, string $sort, string $order, int $page, int $limit, ?R2Service $r2 = null): array
     {
         // Auto-sync if database index is empty for this bucket
-        if ($this->fileIndex->isEmpty($bucketName)) {
-            $this->fileIndex->syncBucket($bucketName, $this->r2);
+        if ($r2 !== null && $this->fileIndex->isEmpty($bucketName)) {
+            $this->fileIndex->syncBucket($bucketName, $r2);
         }
 
         if ($search !== '' || $flat) {
@@ -115,12 +116,17 @@ class FileController extends BaseController
 
         $bucket = $this->bucketResolver->resolve($type);
 
-        if (!$this->r2 || empty($buckets)) {
+        if (empty($buckets)) {
             return 'err_r2_not_configured';
         }
 
         if (!$bucket || empty($bucket['name'])) {
             return 'err_bucket_not_found';
+        }
+
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
+        if (!$r2) {
+            return 'err_r2_not_configured';
         }
 
         if (str_contains($prefix, '..')) {
@@ -131,7 +137,8 @@ class FileController extends BaseController
             'type'    => $type,
             'prefix'  => ltrim($prefix, '/'),
             'bucket'  => $bucket,
-            'buckets' => $buckets
+            'buckets' => $buckets,
+            'r2'      => $r2,
         ];
     }
 
@@ -153,6 +160,7 @@ class FileController extends BaseController
         $prefix  = $resultData['prefix'];
         $bucket  = $resultData['bucket'];
         $buckets = $resultData['buckets'];
+        $r2      = $resultData['r2'];
 
         $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
@@ -160,7 +168,7 @@ class FileController extends BaseController
         $sort   = (string) $request->query('sort', 'name');
         $order  = (string) $request->query('order', 'asc');
 
-        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, 1, 25);
+        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, 1, 25, $r2);
 
         $viewData = new ListViewData(
             $this->csrf->getToken(),
@@ -192,6 +200,7 @@ class FileController extends BaseController
         $type    = $resultData['type'];
         $prefix  = $resultData['prefix'];
         $bucket  = $resultData['bucket'];
+        $r2      = $resultData['r2'];
 
         $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
@@ -203,7 +212,7 @@ class FileController extends BaseController
         $page   = (int) $request->query('page', 1);
         if ($page < 1) $page = 1;
 
-        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, $page, $limit);
+        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, $page, $limit, $r2);
 
         // Format size and append publicUrl
         $formattedObjects = [];
@@ -235,20 +244,21 @@ class FileController extends BaseController
      */
     public function delete(Request $request): Response
     {
-        $type = $request->query('type');
-        $key  = (string) $request->query('key', '');
+        $type = $request->query('type') ?? $request->post('type');
+        $key  = (string) ($request->query('key') ?? $request->post('key', ''));
 
         if (str_contains($key, '..')) {
             throw HttpException::badRequest(__('err_path_traversal'));
         }
 
         $bucket = $this->bucketResolver->resolve($type);
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($key)) {
+        if (!$r2 || !$bucket || empty($bucket['name']) || empty($key)) {
             throw HttpException::badRequest(__('err_invalid_request'));
         }
 
-        $this->r2->deleteObject($bucket['name'], $key);
+        $r2->deleteObject($bucket['name'], $key);
         $this->fileIndex->deleteObject($bucket['name'], $key);
         $this->logger->log('delete', $bucket['name'], $key, null, 'Deleted file');
 
@@ -283,12 +293,13 @@ class FileController extends BaseController
      */
     public function rename(Request $request): Response
     {
-        $type   = $request->query('type');
-        $oldKey = $request->query('key');
+        $type   = $request->query('type') ?? $request->post('type');
+        $oldKey = $request->query('key') ?? $request->post('oldKey');
         $newKey = $request->post('newKey');
         $bucket = $this->bucketResolver->resolve($type);
+        $r2     = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($oldKey) || empty($newKey)) {
+        if (!$r2 || !$bucket || empty($bucket['name']) || empty($oldKey) || empty($newKey)) {
             throw HttpException::badRequest(__('err_invalid_request'));
         }
 
@@ -299,8 +310,8 @@ class FileController extends BaseController
         $newKey = ltrim(trim((string) $newKey), '/');
 
         if ($newKey !== $oldKey) {
-            $this->r2->copyObject($bucket['name'], (string) $oldKey, $newKey);
-            $this->r2->deleteObject($bucket['name'], (string) $oldKey);
+            $r2->copyObject($bucket['name'], (string) $oldKey, $newKey);
+            $r2->deleteObject($bucket['name'], (string) $oldKey);
             $this->fileIndex->renameObject($bucket['name'], (string) $oldKey, $newKey);
             $this->logger->log('rename', $bucket['name'], $newKey, null, "Renamed from $oldKey");
         }
@@ -327,11 +338,12 @@ class FileController extends BaseController
      */
     public function bulkDelete(Request $request): Response
     {
-        $type = $request->query('type');
+        $type = $request->query('type') ?? $request->post('type');
         $keys = $request->post('keys');
         $bucket = $this->bucketResolver->resolve($type);
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
+        if (!$r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
             throw HttpException::badRequest(__('err_invalid_request'));
         }
 
@@ -341,7 +353,7 @@ class FileController extends BaseController
             }
         }
 
-        $this->r2->deleteObjects($bucket['name'], $keys);
+        $r2->deleteObjects($bucket['name'], $keys);
         $this->fileIndex->deleteObjects($bucket['name'], $keys);
 
         foreach ($keys as $key) {
@@ -382,11 +394,12 @@ class FileController extends BaseController
      */
     public function bulkDownload(Request $request): Response
     {
-        $type = $request->query('type');
+        $type = $request->query('type') ?? $request->post('type');
         $keys = $request->post('keys');
         $bucket = $this->bucketResolver->resolve($type);
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
+        if (!$r2 || !$bucket || empty($bucket['name']) || empty($keys) || !is_array($keys)) {
             throw HttpException::badRequest(__('err_invalid_request'));
         }
 
@@ -414,7 +427,7 @@ class FileController extends BaseController
 
         foreach ($keys as $key) {
             try {
-                $object = $this->r2->getObject($bucket['name'], $key);
+                $object = $r2->getObject($bucket['name'], $key);
                 $body = $object['Body'];
                 $content = (string)$body;
                 
@@ -444,8 +457,8 @@ class FileController extends BaseController
      */
     public function createFolder(Request $request): Response
     {
-        $type   = $request->query('type');
-        $prefix = (string) $request->query('prefix', '');
+        $type   = $request->query('type') ?? $request->post('type');
+        $prefix = (string) ($request->query('prefix') ?? $request->post('prefix', ''));
         $folderName = (string) $request->post('folderName', '');
 
         $buckets = $this->bucketResolver->all();
@@ -454,8 +467,9 @@ class FileController extends BaseController
         }
 
         $bucket = $this->bucketResolver->resolve($type);
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name'])) {
+        if (!$r2 || !$bucket || empty($bucket['name'])) {
             throw HttpException::badRequest(__('err_invalid_request'));
         }
 
@@ -477,7 +491,7 @@ class FileController extends BaseController
             throw HttpException::badRequest(__('err_path_traversal'));
         }
 
-        $this->r2->createFolder($bucket['name'], $newPrefix);
+        $r2->createFolder($bucket['name'], $newPrefix);
         $this->fileIndex->addObject($bucket['name'], $newPrefix, 0, date('Y-m-d H:i:s'), true);
         $this->logger->log('create_folder', $bucket['name'], $newPrefix, null, 'Created empty folder');
 
@@ -499,20 +513,21 @@ class FileController extends BaseController
      */
     public function syncIndex(Request $request): Response
     {
-        $type = $request->query('type');
+        $type = $request->query('type') ?? $request->post('type');
         $buckets = $this->bucketResolver->all();
         if (empty($type) && !empty($buckets)) {
             $type = $this->bucketResolver->firstType();
         }
 
         $bucket = $this->bucketResolver->resolve($type);
+        $r2 = $this->r2ClientFactory->getForBucket($bucket);
 
-        if (!$this->r2 || !$bucket || empty($bucket['name'])) {
+        if (!$r2 || !$bucket || empty($bucket['name'])) {
             return Response::json(['error' => __('err_invalid_request')], 400);
         }
 
         try {
-            $this->fileIndex->syncBucket($bucket['name'], $this->r2);
+            $this->fileIndex->syncBucket($bucket['name'], $r2);
             return Response::json(['success' => true]);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], 500);

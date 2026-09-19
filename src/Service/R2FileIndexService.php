@@ -144,7 +144,7 @@ class R2FileIndexService
             $objects[] = [
                 'Key' => $row['object_key'],
                 'Size' => (int)$row['size'],
-                'LastModified' => new \DateTime($row['last_modified']),
+                'LastModified' => !empty($row['last_modified']) ? new \DateTime($row['last_modified'], new \DateTimeZone('UTC')) : new \DateTime('now', new \DateTimeZone('UTC')),
             ];
         }
 
@@ -181,7 +181,7 @@ class R2FileIndexService
                     $objects[] = [
                         'Key' => $key,
                         'Size' => (int)$row['size'],
-                        'LastModified' => new \DateTime($row['last_modified']),
+                        'LastModified' => !empty($row['last_modified']) ? new \DateTime($row['last_modified'], new \DateTimeZone('UTC')) : new \DateTime('now', new \DateTimeZone('UTC')),
                     ];
                 }
             } else {

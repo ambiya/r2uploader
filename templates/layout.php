@@ -1,5 +1,6 @@
+<?php $currentLang = \R2Uploader\Service\Translator::getInstance()?->getLocale() ?? 'id'; ?>
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="<?= htmlspecialchars($currentLang) ?>" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,7 +66,6 @@
         </a>
       <?php endif; ?>
       
-      <?php $currentLang = \R2Uploader\Service\Translator::getInstance()?->getLocale() ?? 'id'; ?>
       <div style="display:flex; align-items:center; gap:0.5rem; margin-right:0.5rem;">
         <a href="/?action=lang&l=id" style="text-decoration:none; color:inherit; opacity: <?= $currentLang === 'id' ? '1' : '0.5' ?>; font-weight: <?= $currentLang === 'id' ? '600' : '400' ?>;">ID</a>
         <span style="opacity:0.3">|</span>

@@ -22,6 +22,7 @@ use R2Uploader\Http\Response;
 use R2Uploader\Security\Csrf;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\BucketResolver;
+use R2Uploader\Service\R2ClientFactory;
 use R2Uploader\Service\R2Service;
 use R2Uploader\Service\SettingManager;
 
@@ -110,39 +111,35 @@ class App
             return $loader->load();
         });
 
-        $c->set('configError', function (Container $c) {
+        $c->set('bucketResolver', function (Container $c) {
             $config = $c->get('config');
-            if (empty($config['accountId']) || empty($config['accessKeyId']) || empty($config['secretAccessKey'])) {
-                return 'Cloudflare R2 configuration is incomplete in the <code>.env</code> file. '
-                    . 'Please fill in <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, and <code>R2_SECRET_ACCESS_KEY</code>.';
+            return new BucketResolver($config['buckets']);
+        });
+
+        $c->set('r2ClientFactory', function (Container $c) {
+            $config = $c->get('config');
+            $globalCreds = [
+                'accountId'       => $config['accountId'] ?? '',
+                'accessKeyId'     => $config['accessKeyId'] ?? '',
+                'secretAccessKey' => $config['secretAccessKey'] ?? '',
+            ];
+            return new R2ClientFactory($globalCreds, $c->get('bucketResolver'));
+        });
+
+        $c->set('configError', function (Container $c) {
+            /** @var R2ClientFactory $r2Factory */
+            $r2Factory = $c->get('r2ClientFactory');
+            if (!$r2Factory->hasAnyValidConfiguration()) {
+                return 'Cloudflare R2 configuration is incomplete. '
+                    . 'Please fill in <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, and <code>R2_SECRET_ACCESS_KEY</code> in Settings or <code>.env</code>.';
             }
             return '';
         });
 
         $c->set('r2', function (Container $c) {
-            $config = $c->get('config');
-            if (empty($config['accountId']) || empty($config['accessKeyId']) || empty($config['secretAccessKey'])) {
-                return null;
-            }
-            try {
-                $s3Client = new S3Client([
-                    'version'     => 'latest',
-                    'region'      => 'auto',
-                    'endpoint'    => "https://{$config['accountId']}.r2.cloudflarestorage.com",
-                    'credentials' => [
-                        'key'    => $config['accessKeyId'],
-                        'secret' => $config['secretAccessKey'],
-                    ],
-                ]);
-                return new R2Service($s3Client);
-            } catch (\Exception $e) {
-                return null;
-            }
-        });
-
-        $c->set('bucketResolver', function (Container $c) {
-            $config = $c->get('config');
-            return new BucketResolver($config['buckets']);
+            /** @var R2ClientFactory $r2Factory */
+            $r2Factory = $c->get('r2ClientFactory');
+            return $r2Factory->getDefault();
         });
 
         $c->set('userManager', fn() => new UserManager($dbPath));
@@ -197,7 +194,7 @@ class App
             $config = $c->get('config');
             $config['configError'] = $c->get('configError');
             return new UploadController(
-                $c->get('r2'),
+                $c->get('r2ClientFactory'),
                 $c->get('csrf'),
                 $c->get('bucketResolver'),
                 $c->get('logger'),
@@ -208,7 +205,7 @@ class App
 
         $c->set('fileCtrl', function (Container $c) {
             return new FileController(
-                $c->get('r2'),
+                $c->get('r2ClientFactory'),
                 $c->get('csrf'),
                 $c->get('bucketResolver'),
                 $c->get('logger'),
@@ -229,7 +226,7 @@ class App
                 $c->get('csrf'),
                 $c->get('logger'),
                 $c->get('bucketResolver'),
-                $c->get('r2'),
+                $c->get('r2ClientFactory'),
                 $c->get('fileIndex')
             );
         });

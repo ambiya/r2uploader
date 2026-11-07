@@ -61,30 +61,7 @@
         });
     };
 
-    // Search/Filter
-    window.filterFiles = function(query) {
-        const rows = document.querySelectorAll('.file-row');
-        const q = query.toLowerCase().trim();
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const fileName = row.querySelector('.file-link')?.textContent?.toLowerCase() || '';
-            const match = !q || fileName.includes(q);
-            row.dataset.filtered = match ? 'false' : 'true';
-            if (match) visibleCount++;
-        });
-
-        if (window._r2Pagination) {
-            window._r2Pagination.reset();
-        }
-
-        const emptyState = document.getElementById('search-empty-state');
-        if (emptyState) {
-            emptyState.style.display = (visibleCount === 0 && q) ? 'block' : 'none';
-        }
-    };
-
-    // Client-side Pagination replaced with AJAX
+    // AJAX File List & Pagination
     document.addEventListener('DOMContentLoaded', function() {
         const fileTableBody = document.getElementById('file-table-body');
         if (!fileTableBody) return; // Not on list page
@@ -114,7 +91,6 @@
 
         // State
         let currentPageIndex = 0; // 0-based index
-        let historyTokens = [null]; // Maps page index to continuation token
         let currentSearch = searchInput ? searchInput.value.trim() : '';
         const selectedFiles = new Set();
 
@@ -268,8 +244,6 @@
             fileTableBody.innerHTML = '';
             folderGrid.innerHTML = '';
 
-            const token = historyTokens[currentPageIndex];
-            
             // Build API URL
             const apiUrl = new URL(window.location.origin + '/');
             apiUrl.searchParams.set('action', 'api_list');
@@ -334,12 +308,6 @@
                         btnNext.disabled = !data.isTruncated;
                     }
 
-                    // If there's a next page, ensure we store its token
-                    if (data.isTruncated) {
-                        // For search, we just increment page. For normal, we need the token.
-                        historyTokens[currentPageIndex + 1] = currentSearch ? null : data.nextToken;
-                    }
-
                     updateBulkActionsBar();
                 })
                 .catch(err => {
@@ -373,7 +341,6 @@
                 localStorage.setItem(STORAGE_KEY, String(limit));
                 // Reset to page 1
                 currentPageIndex = 0;
-                historyTokens = [null];
                 fetchPage();
             });
         }
@@ -404,7 +371,6 @@
                 localStorage.setItem('r2mgr_sort', currentSort);
                 localStorage.setItem('r2mgr_order', currentOrder);
                 currentPageIndex = 0;
-                historyTokens = [null];
                 updateUrlAndFetch();
             });
         });
@@ -414,7 +380,6 @@
                 currentFlat = e.target.checked;
                 localStorage.setItem('r2mgr_flat', currentFlat ? '1' : '0');
                 currentPageIndex = 0;
-                historyTokens = [null];
                 updateUrlAndFetch();
             });
         }
@@ -441,7 +406,6 @@
                 if (val !== currentSearch) {
                     currentSearch = val;
                     currentPageIndex = 0;
-                    historyTokens = [null];
                     updateUrlAndFetch();
                 }
             }

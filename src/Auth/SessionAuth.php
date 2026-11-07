@@ -75,22 +75,4 @@ class SessionAuth
         
         return false;
     }
-
-    public function requireAuth(): void
-    {
-        if (!$this->check()) {
-            header('Location: /?action=login');
-            exit;
-        }
-    }
-    
-    public function requireRole(string $role): void
-    {
-        $this->requireAuth();
-        if (!$this->hasRole($role)) {
-            header('HTTP/1.0 403 Forbidden');
-            echo htmlspecialchars("Akses ditolak. Membutuhkan hak akses: $role", ENT_QUOTES, 'UTF-8');
-            exit;
-        }
-    }
 }

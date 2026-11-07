@@ -63,7 +63,6 @@ class FileController extends BaseController
                 'objects' => $sliced,
                 'prefixes' => [],
                 'isTruncated' => ($offset + $limit) < count($allObjects),
-                'nextToken' => null,
             ];
         } else {
             $allLevel = $this->fileIndex->listDirectory($bucketName, $prefix);
@@ -77,7 +76,6 @@ class FileController extends BaseController
                 'objects' => $slicedObjects,
                 'prefixes' => $slicedPrefixes,
                 'isTruncated' => (($offset + $limit) < count($allLevel['objects'])) || (($offset + $limit) < count($allLevel['prefixes'])),
-                'nextToken' => null,
             ];
         }
     }
@@ -160,28 +158,13 @@ class FileController extends BaseController
 
         $type    = $resultData['type'];
         $prefix  = $resultData['prefix'];
-        $bucket  = $resultData['bucket'];
         $buckets = $resultData['buckets'];
-        $r2      = $resultData['r2'];
-
-        $ct     = $request->query('ct');
-        $search = (string) $request->query('q', '');
-        $flat   = $request->query('flat') === '1';
-        $sort   = (string) $request->query('sort', 'name');
-        $order  = (string) $request->query('order', 'asc');
-
-        $result = $this->getFilteredAndSortedObjects($bucket['name'], $prefix, $search, $flat, $sort, $order, 1, 25, $r2);
 
         $viewData = new ListViewData(
             $this->csrf->getToken(),
             is_string($type) ? $type : null,
             $buckets,
-            $prefix,
-            $result['objects'],
-            $result['prefixes'],
-            $result['isTruncated'],
-            $result['nextToken'],
-            $bucket['publicUrl']
+            $prefix
         );
 
         return $this->renderPage(__('nav_file_manager'), 'partials/list-content', $viewData, $this->csrf->getToken(), ['file-list']);
@@ -189,7 +172,7 @@ class FileController extends BaseController
 
     /**
      * API endpoint to list files via AJAX.
-     * GET /?action=api_list&type=...&prefix=...&ct=...&limit=...&q=...&page=...
+     * GET /?action=api_list&type=...&prefix=...&limit=...&q=...&page=...
      */
     public function apiList(Request $request): Response
     {
@@ -204,7 +187,6 @@ class FileController extends BaseController
         $bucket  = $resultData['bucket'];
         $r2      = $resultData['r2'];
 
-        $ct     = $request->query('ct');
         $search = (string) $request->query('q', '');
         $flat   = $request->query('flat') === '1';
         $sort   = (string) $request->query('sort', 'name');
@@ -231,7 +213,6 @@ class FileController extends BaseController
             'objects' => $formattedObjects,
             'prefixes' => $result['prefixes'],
             'isTruncated' => $result['isTruncated'],
-            'nextToken' => $result['nextToken'],
             'publicUrl' => $bucket['publicUrl'],
             'csrfToken' => $this->csrf->getToken(),
             'type' => $type

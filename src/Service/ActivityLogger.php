@@ -56,21 +56,6 @@ class ActivityLogger
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
     
-    public function getStorageStatsByBucket(): array
-    {
-        $stmt = $this->db->query("
-            SELECT 
-                bucket, 
-                COUNT(*) as upload_count, 
-                SUM(file_size) as total_uploaded_bytes
-            FROM activity_log
-            WHERE action = 'upload'
-            GROUP BY bucket
-        ");
-        
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
-    
     public function getUserActivityStats(): array
     {
         $stmt = $this->db->query("

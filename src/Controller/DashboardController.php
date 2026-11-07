@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace R2Uploader\Controller;
 
+use R2Uploader\Helpers\FileHelper;
+use R2Uploader\Http\Request;
 use R2Uploader\Http\Response;
 use R2Uploader\Security\Csrf;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2ClientFactory;
-use R2Uploader\Service\R2Service;
 use R2Uploader\Service\R2FileIndexService;
 use R2Uploader\ViewData\DashboardViewData;
 
@@ -58,10 +59,10 @@ class DashboardController extends BaseController
                     $r2Stats[$bucket['name']] = [
                         'type'         => $type,
                         'totalFiles'   => $stats['totalFiles'],
-                        'totalSize'    => $this->formatBytes($stats['totalSize']),
+                        'totalSize'    => FileHelper::formatFileSize($stats['totalSize']),
                         'fileTypes'    => $stats['fileTypes'] ?? [],
                         'largestFiles' => array_map(function($f) {
-                            $f['FormattedSize'] = $this->formatBytes((int)$f['Size']);
+                            $f['FormattedSize'] = FileHelper::formatFileSize((int)$f['Size']);
                             return $f;
                         }, $stats['largestFiles'] ?? []),
                     ];
@@ -102,25 +103,18 @@ class DashboardController extends BaseController
         return $this->renderPage(__('nav_dashboard'), 'dashboard', $viewData, $this->csrf->getToken());
     }
 
-
-    private function formatBytes(int $bytes): string
+    /**
+     * Clear all activity logs.
+     * POST /?action=dashboard_clear_logs
+     *
+     * Auth + CSRF validated by middleware.
+     */
+    public function clearLogs(Request $request): Response
     {
-        if ($bytes === 0) return '0 B';
-        $k = 1024;
-        $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $i = floor(log($bytes) / log($k));
-        return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
-    }
-
-    public function clearLogs(\R2Uploader\Http\Request $request): Response
-    {
-        if (!$this->csrf->validate($request->post('csrf_token'))) {
-            return Response::error('Invalid CSRF token', 403, $request);
-        }
-
         $this->logger->clearAllActivity();
-        
-        return Response::redirect('/?action=dashboard');
+        $this->csrf->regenerate();
+
+        return $this->redirect('/?action=dashboard');
     }
 }
 

@@ -202,4 +202,5 @@ return [
     'custom_secret_key' => 'Secret Access Key',
     'custom_credentials_active' => 'Kredensial Khusus Aktif',
     'placeholder_keep_secret' => '•••••••••••••••• (Tersimpan - kosongkan jika tetap)',
+    'err_access_denied' => 'Akses ditolak. Membutuhkan hak akses: :role',
 ];

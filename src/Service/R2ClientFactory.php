@@ -55,16 +55,6 @@ class R2ClientFactory
     }
 
     /**
-     * Check if a specific bucket has valid credentials (either custom or global fallback).
-     *
-     * @param array{name?: string, publicUrl?: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}|null $bucket
-     */
-    public function isBucketConfigured(?array $bucket): bool
-    {
-        return $this->getCredentialsForBucket($bucket) !== null;
-    }
-
-    /**
      * Get or create an R2Service instance for a specific bucket configuration.
      *
      * @param array{name?: string, publicUrl?: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}|null $bucket
@@ -97,24 +87,6 @@ class R2ClientFactory
         } catch (\Exception $e) {
             return null;
         }
-    }
-
-    /**
-     * Get R2Service by bucket slug/type.
-     */
-    public function getForType(?string $type): ?R2Service
-    {
-        $bucket = $this->bucketResolver->resolve($type);
-        return $this->getForBucket($bucket);
-    }
-
-    /**
-     * Get R2Service by physical bucket name.
-     */
-    public function getForBucketName(string $name): ?R2Service
-    {
-        $bucket = $this->bucketResolver->resolveByName($name);
-        return $this->getForBucket($bucket);
     }
 
     /**

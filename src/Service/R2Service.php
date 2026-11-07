@@ -18,50 +18,6 @@ class R2Service
     }
 
     /**
-     * List objects in a bucket with prefix/delimiter.
-     *
-     * @return array{objects: array, prefixes: string[], isTruncated: bool, nextToken: ?string}
-     */
-    public function listObjects(string $bucket, string $prefix = '', int $maxKeys = 1000, ?string $continuationToken = null): array
-    {
-        $params = [
-            'Bucket' => $bucket,
-            'Prefix' => $prefix,
-            'Delimiter' => '/',
-            'MaxKeys' => $maxKeys,
-        ];
-        if (!empty($continuationToken)) {
-            $params['ContinuationToken'] = $continuationToken;
-        }
-
-        $result = $this->client->listObjectsV2($params);
-
-        $prefixes = [];
-        if (isset($result['CommonPrefixes'])) {
-            foreach ($result['CommonPrefixes'] as $cp) {
-                $prefixes[] = $cp['Prefix'];
-            }
-        }
-
-        $objects = [];
-        if (isset($result['Contents'])) {
-            foreach ($result['Contents'] as $obj) {
-                if ($obj['Key'] === $prefix) {
-                    continue;
-                }
-                $objects[] = $obj;
-            }
-        }
-
-        return [
-            'objects' => $objects,
-            'prefixes' => $prefixes,
-            'isTruncated' => (bool) ($result['IsTruncated'] ?? false),
-            'nextToken' => $result['NextContinuationToken'] ?? null,
-        ];
-    }
-
-    /**
      * List ALL objects under a prefix, automatically paginating.
      *
      * @return array Flat array of S3 object entries
@@ -94,53 +50,6 @@ class R2Service
         } while (!empty($result['IsTruncated']) && $continuationToken !== null);
 
         return $allObjects;
-    }
-
-    /**
-     * List ALL objects and prefixes under a directory (non-recursive), automatically paginating S3.
-     */
-    public function listAllInDirectory(string $bucket, string $prefix = ''): array
-    {
-        $allObjects = [];
-        $allPrefixes = [];
-        $continuationToken = null;
-
-        do {
-            $params = [
-                'Bucket' => $bucket,
-                'Prefix' => $prefix,
-                'Delimiter' => '/',
-                'MaxKeys' => 1000,
-            ];
-            if ($continuationToken !== null) {
-                $params['ContinuationToken'] = $continuationToken;
-            }
-
-            $result = $this->client->listObjectsV2($params);
-
-            if (isset($result['CommonPrefixes'])) {
-                foreach ($result['CommonPrefixes'] as $cp) {
-                    $allPrefixes[] = $cp['Prefix'];
-                }
-            }
-
-            if (isset($result['Contents'])) {
-                foreach ($result['Contents'] as $obj) {
-                    if ($obj['Key'] !== $prefix) {
-                        $allObjects[] = $obj;
-                    }
-                }
-            }
-
-            $continuationToken = $result['NextContinuationToken'] ?? null;
-        } while (!empty($result['IsTruncated']) && $continuationToken !== null);
-
-        $allPrefixes = array_values(array_unique($allPrefixes));
-
-        return [
-            'objects' => $allObjects,
-            'prefixes' => $allPrefixes,
-        ];
     }
 
     /**
@@ -198,52 +107,6 @@ class R2Service
             'Key' => $newKey,
             'CopySource' => $bucket . '/' . rawurlencode($sourceKey),
         ]);
-    }
-
-    /**
-     * Get storage statistics for a bucket.
-     *
-     * @return array{totalFiles: int, totalSize: int}
-     */
-    public function getStorageStats(string $bucket, string $prefix = ''): array
-    {
-        $objects = $this->listAllObjects($bucket, $prefix);
-        $totalSize = 0;
-        $fileTypes = [];
-        $largestFiles = [];
-
-        foreach ($objects as $obj) {
-            $size = (int) ($obj['Size'] ?? 0);
-            $totalSize += $size;
-
-            $ext = strtolower(pathinfo($obj['Key'], PATHINFO_EXTENSION));
-            if (empty($ext)) {
-                $ext = 'unknown';
-            }
-            if (!isset($fileTypes[$ext])) {
-                $fileTypes[$ext] = 0;
-            }
-            $fileTypes[$ext]++;
-
-            $largestFiles[] = [
-                'Key' => $obj['Key'],
-                'Size' => $size,
-            ];
-        }
-
-        // Sort for largest files (descending size)
-        usort($largestFiles, fn($a, $b) => $b['Size'] <=> $a['Size']);
-        $largestFiles = array_slice($largestFiles, 0, 5);
-
-        // Sort file types by count descending
-        arsort($fileTypes);
-
-        return [
-            'totalFiles' => count($objects),
-            'totalSize' => $totalSize,
-            'fileTypes' => $fileTypes,
-            'largestFiles' => $largestFiles,
-        ];
     }
 
     /**

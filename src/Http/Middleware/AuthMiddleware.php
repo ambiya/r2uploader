@@ -37,7 +37,7 @@ class AuthMiddleware implements MiddlewareInterface
 
         if ($this->requiredRole !== null && !$this->auth->hasRole($this->requiredRole)) {
             return Response::error(
-                "Akses ditolak. Membutuhkan hak akses: {$this->requiredRole}",
+                __('err_access_denied', ['role' => $this->requiredRole]),
                 403,
                 $request
             );

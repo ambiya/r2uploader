@@ -11,7 +11,6 @@ use R2Uploader\Security\Csrf;
 use R2Uploader\Service\AutoRetention;
 use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2ClientFactory;
-use R2Uploader\Service\R2Service;
 use R2Uploader\Service\RemoteDownloader;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\R2FileIndexService;
@@ -130,26 +129,21 @@ class UploadController extends BaseController
 
             // Auto-retention
             $pruneDeletedKeys = [];
-            $pruneKeptCount = null;
 
             if ($this->config['folderMaxFiles'] > 0 && !empty($folder)) {
                 $retention = new AutoRetention($r2, $this->config['folderMaxFiles']);
                 $folderPrefix = rtrim($folder, '/') . '/';
                 $pruneDeletedKeys = $retention->prune($bucket['name'], $folderPrefix);
-                $pruneKeptCount = $this->config['folderMaxFiles'];
 
                 if (!empty($pruneDeletedKeys)) {
                     $this->fileIndex->deleteObjects($bucket['name'], $pruneDeletedKeys);
                 }
             }
 
-
-
             $viewData = new SuccessViewData(
                 $successFiles,
                 is_string($type) ? $type : null,
                 $pruneDeletedKeys,
-                $pruneKeptCount,
                 $this->config['folderMaxFiles'],
                 $folder
             );

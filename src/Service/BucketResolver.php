@@ -36,21 +36,6 @@ class BucketResolver
     }
 
     /**
-     * Resolve bucket config by physical bucket name.
-     *
-     * @return array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}|null
-     */
-    public function resolveByName(string $name): ?array
-    {
-        foreach ($this->buckets as $bucket) {
-            if (($bucket['name'] ?? '') === $name) {
-                return $bucket;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Get all configured buckets.
      *
      * @return array<string, array{name: string, publicUrl: string, accountId?: string, accessKeyId?: string, secretAccessKey?: string}>
@@ -69,13 +54,5 @@ class BucketResolver
             return null;
         }
         return (string) array_key_first($this->buckets);
-    }
-
-    /**
-     * Check if any buckets are configured.
-     */
-    public function hasBuckets(): bool
-    {
-        return !empty($this->buckets);
     }
 }

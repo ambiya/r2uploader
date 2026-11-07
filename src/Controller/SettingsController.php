@@ -132,7 +132,7 @@ class SettingsController extends BaseController
 
             $this->settings->set('R2_BUCKETS', json_encode($buckets));
 
-            $this->logger->log('settings_update', null, null, null, 'Mengubah pengaturan sistem.');
+            $this->logger->log('settings_update', null, null, null, 'Updated system settings');
 
             $_SESSION['settings_success'] = __('success_settings_saved');
         } catch (\Exception $e) {

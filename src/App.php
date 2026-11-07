@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace R2Uploader;
 
-use Aws\S3\S3Client;
 use R2Uploader\Auth\SessionAuth;
 use R2Uploader\Auth\UserManager;
 use R2Uploader\Config\ConfigLoader;
@@ -23,7 +22,6 @@ use R2Uploader\Security\Csrf;
 use R2Uploader\Service\ActivityLogger;
 use R2Uploader\Service\BucketResolver;
 use R2Uploader\Service\R2ClientFactory;
-use R2Uploader\Service\R2Service;
 use R2Uploader\Service\SettingManager;
 
 /**
@@ -134,12 +132,6 @@ class App
                     . 'Please fill in <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, and <code>R2_SECRET_ACCESS_KEY</code> in Settings or <code>.env</code>.';
             }
             return '';
-        });
-
-        $c->set('r2', function (Container $c) {
-            /** @var R2ClientFactory $r2Factory */
-            $r2Factory = $c->get('r2ClientFactory');
-            return $r2Factory->getDefault();
         });
 
         $c->set('userManager', fn() => new UserManager($dbPath));

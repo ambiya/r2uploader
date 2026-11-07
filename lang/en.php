@@ -202,4 +202,5 @@ return [
     'custom_secret_key' => 'Secret Access Key',
     'custom_credentials_active' => 'Custom Credentials Active',
     'placeholder_keep_secret' => '•••••••••••••••• (Saved - leave empty to keep)',
+    'err_access_denied' => 'Access denied. Required role: :role',
 ];

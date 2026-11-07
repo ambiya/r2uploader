@@ -27,7 +27,7 @@
         <tr>
           <th>ID</th>
           <th><?= __('username') ?></th>
-          <th>Role</th>
+          <th><?= __('label_role') ?></th>
           <th><?= __('created') ?></th>
           <th><?= __('last_login') ?></th>
           <th style="text-align:right;"><?= __('action') ?></th>

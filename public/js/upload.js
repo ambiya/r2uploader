@@ -4,6 +4,8 @@
 (function() {
     'use strict';
 
+    const t = (key, params) => (window.__t ? window.__t(key, params) : key);
+
     window.switchTab = function(mode) {
         const modeInput = document.getElementById('upload-mode');
         if (modeInput) modeInput.value = mode;
@@ -23,13 +25,13 @@
             if (manualContent) manualContent.style.display = 'none';
             if (fileUrl) fileUrl.setAttribute('required', '');
             if (manualFile) manualFile.removeAttribute('required');
-            if (btnText) btnText.innerText = 'Upload dari URL';
+            if (btnText) btnText.innerText = t('btn_upload_url');
         } else {
             if (remoteContent) remoteContent.style.display = 'none';
             if (manualContent) manualContent.style.display = 'block';
             if (fileUrl) fileUrl.removeAttribute('required');
             if (manualFile) manualFile.setAttribute('required', '');
-            if (btnText) btnText.innerText = 'Upload dari Perangkat';
+            if (btnText) btnText.innerText = t('btn_upload_device');
         }
     };
 
@@ -44,17 +46,18 @@
         if (!isUploading) {
             btn.disabled = false;
             spinner.style.display = 'none';
+            btnText.innerText = mode === 'manual' ? t('btn_upload_device') : t('btn_upload_url');
             if (helper) helper.style.display = 'none';
             return;
         }
 
         btn.disabled = true;
         spinner.style.display = 'inline-block';
-        btnText.innerText = mode === 'manual' ? 'Uploading…' : 'Downloading…';
+        btnText.innerText = mode === 'manual' ? t('status_uploading') : t('status_downloading');
 
         if (helper) {
             helper.style.display = 'block';
-            helper.innerText = 'Do not close this page until the process is complete.';
+            helper.innerText = t('upload_wait_helper');
         }
     };
 
@@ -70,14 +73,19 @@
                 const item = document.createElement('div');
                 item.className = 'selected-file-item';
                 
-                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                item.innerHTML = `
-                    <div class="selected-file-name" title="${file.name}">
-                        <svg style="width:1rem;height:1rem;display:inline-block;vertical-align:text-bottom;margin-right:0.25rem;color:var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        ${file.name}
-                    </div>
-                    <div style="color:var(--text-muted);font-size:0.75rem;">${sizeMB} MB</div>
-                `;
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'selected-file-name';
+                nameDiv.title = file.name;
+                nameDiv.innerHTML = '<svg style="width:1rem;height:1rem;display:inline-block;vertical-align:text-bottom;margin-right:0.25rem;color:var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
+                nameDiv.appendChild(document.createTextNode(' ' + file.name));
+
+                const sizeDiv = document.createElement('div');
+                sizeDiv.style.color = 'var(--text-muted)';
+                sizeDiv.style.fontSize = '0.75rem';
+                sizeDiv.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+                item.appendChild(nameDiv);
+                item.appendChild(sizeDiv);
                 listContainer.appendChild(item);
             });
         }
@@ -132,7 +140,7 @@
                     progressContainer.style.display = 'block';
                     progressText.style.display = 'block';
                     progressBar.style.width = '0%';
-                    progressText.innerText = '0% (Memulai...)';
+                    progressText.innerText = t('status_starting');
                 }
 
                 const xhr = new XMLHttpRequest();
@@ -159,32 +167,25 @@
                         progressText.style.display = 'none';
                     }
                     
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            if (res.success) {
-                                if (window.showToast) window.showToast('Upload successful!', 'success');
-                                // Fallback to reload if JSON success
-                                window.location.reload();
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (xhr.status >= 200 && xhr.status < 300 && res.success) {
+                            if (res.title) {
+                                document.title = `${res.title} - R2Uploader`;
+                            }
+                            const mainEl = document.querySelector('main');
+                            if (mainEl && res.html) {
+                                mainEl.innerHTML = res.html;
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
                             } else {
-                                if (window.showToast) window.showToast(res.error || 'An error occurred.', 'error');
+                                window.location.reload();
                             }
-                        } catch (e) {
-                            // If response is not JSON, it might be the HTML success page.
-                            // We replace document with it.
-                            document.open();
-                            document.write(xhr.responseText);
-                            document.close();
+                            if (window.showToast) window.showToast(t('upload_success_title'), 'success');
+                        } else {
+                            if (window.showToast) window.showToast(res.error || t('err_network'), 'error');
                         }
-                    } else {
-                        try {
-                            const res = JSON.parse(xhr.responseText);
-                            if (res.error) {
-                                if (window.showToast) window.showToast(res.error, 'error');
-                                return;
-                            }
-                        } catch(e) {}
-                        if (window.showToast) window.showToast(`Error: ${xhr.statusText || 'Failed to upload.'}`, 'error');
+                    } catch (err) {
+                        if (window.showToast) window.showToast(t('err_network'), 'error');
                     }
                 };
 
@@ -194,7 +195,7 @@
                         progressContainer.style.display = 'none';
                         progressText.style.display = 'none';
                     }
-                    if (window.showToast) window.showToast('Failed to connect to server.', 'error');
+                    if (window.showToast) window.showToast(t('err_network'), 'error');
                 };
 
                 xhr.send(formData);

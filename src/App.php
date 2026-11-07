@@ -128,8 +128,7 @@ class App
             /** @var R2ClientFactory $r2Factory */
             $r2Factory = $c->get('r2ClientFactory');
             if (!$r2Factory->hasAnyValidConfiguration()) {
-                return 'Cloudflare R2 configuration is incomplete. '
-                    . 'Please fill in <code>R2_ACCOUNT_ID</code>, <code>R2_ACCESS_KEY_ID</code>, and <code>R2_SECRET_ACCESS_KEY</code> in Settings or <code>.env</code>.';
+                return __('err_config_incomplete_detail');
             }
             return '';
         });

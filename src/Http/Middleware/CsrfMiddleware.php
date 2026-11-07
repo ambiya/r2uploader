@@ -26,7 +26,7 @@ class CsrfMiddleware implements MiddlewareInterface
     public function handle(Request $request, callable $next): Response
     {
         if ($request->isPost() && !$this->csrf->validate()) {
-            return Response::error('Invalid CSRF token.', 403, $request);
+            return Response::error(__('err_invalid_csrf'), 403, $request);
         }
 
         return $next($request);

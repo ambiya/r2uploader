@@ -42,9 +42,9 @@
       <?= __('file_folder_list') ?>
     </h2>
     <div style="display:flex; gap:0.5rem; align-items:center;">
-      <button id="btn-sync-bucket" class="btn btn-secondary" onclick="syncBucketIndex()" style="display:flex; align-items:center; gap:0.35rem;" title="Sync database with R2">
+      <button id="btn-sync-bucket" class="btn btn-secondary" onclick="syncBucketIndex()" style="display:flex; align-items:center; gap:0.35rem;" title="<?= htmlspecialchars(__('title_sync_bucket')) ?>">
         <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-        Sync
+        <?= __('btn_sync') ?>
       </button>
       <button class="btn btn-secondary" onclick="openCreateFolderModal()" style="display:flex; align-items:center; gap:0.35rem;">
         <svg style="width:1.1rem;height:1.1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0v8m0-8h8m-8 0H4"></path></svg>
@@ -69,23 +69,23 @@
     
     <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.85rem; cursor:pointer;">
       <input type="checkbox" id="flat-view-checkbox" style="width:auto;">
-      Flat View (No Folders)
+      <?= __('flat_view') ?>
     </label>
   </div>
 
   <!-- Bulk Actions Bar -->
   <div id="bulk-actions-bar" class="card" style="display: none; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; border-color: var(--accent); background: var(--accent-soft); flex-wrap: wrap;">
     <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
-      🗂️ <span id="bulk-selected-count">0</span> file terpilih
+      🗂️ <span id="bulk-selected-count">0</span> <?= __('files_selected') ?>
     </div>
     <div style="display: flex; gap: 0.5rem;">
       <button id="btn-bulk-download" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
         <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-        Unduh ZIP
+        <?= __('btn_download_zip') ?>
       </button>
       <button id="btn-bulk-delete" class="btn btn-danger" style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; padding: 0.4rem 0.75rem;">
         <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-        Hapus Terpilih
+        <?= __('btn_delete_selected') ?>
       </button>
     </div>
   </div>
@@ -126,9 +126,9 @@
 
   <div class="pagination-bar" id="pagination-bar" style="display:none;">
     <div style="display: flex; gap: 0.5rem; align-items: center;" id="pagination-buttons">
-      <button id="btn-prev-page" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" disabled>&laquo; Prev</button>
-      <span id="page-indicator" style="font-size: 0.85rem; font-weight: 500;">Page 1</span>
-      <button id="btn-next-page" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" disabled>Next &raquo;</button>
+      <button id="btn-prev-page" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" disabled>&laquo; <?= __('prev') ?></button>
+      <span id="page-indicator" style="font-size: 0.85rem; font-weight: 500;"><?= __('page_label') ?> 1</span>
+      <button id="btn-next-page" class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" disabled><?= __('next') ?> &raquo;</button>
     </div>
     <label class="per-page-select">
       <?= __('per_page') ?>
@@ -142,7 +142,7 @@
 
   <div id="loading-spinner" style="text-align:center; padding:3rem; color:var(--text-muted);">
       <svg style="width:2rem;height:2rem; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-      <div style="margin-top: 1rem; font-size: 0.9rem;">Loading...</div>
+      <div style="margin-top: 1rem; font-size: 0.9rem;"><?= __('loading') ?></div>
       <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
   </div>
 
@@ -158,7 +158,7 @@
     <h3 style="margin-top:0; margin-bottom:15px;"><?= __('rename_file') ?></h3>
     <div class="form-group">
       <label for="rename-input"><?= __('new_name') ?></label>
-      <input type="text" id="rename-input" name="newKey" required placeholder="folder/baru.apk">
+      <input type="text" id="rename-input" name="newKey" required placeholder="<?= htmlspecialchars(__('placeholder_rename')) ?>">
     </div>
     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
       <button type="button" class="btn btn-secondary" onclick="document.getElementById('rename-modal').close()"><?= __('cancel') ?></button>
@@ -174,7 +174,7 @@
     <h3 style="margin-top:0; margin-bottom:15px;"><?= __('create_folder') ?></h3>
     <div class="form-group">
       <label for="folder-name-input"><?= __('folder_name') ?></label>
-      <input type="text" id="folder-name-input" name="folderName" required placeholder="Contoh: dokumen, images/2026">
+      <input type="text" id="folder-name-input" name="folderName" required placeholder="<?= htmlspecialchars(__('placeholder_folder_name')) ?>">
     </div>
     <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
       <button type="button" class="btn btn-secondary" onclick="document.getElementById('create-folder-modal').close()"><?= __('cancel') ?></button>

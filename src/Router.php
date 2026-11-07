@@ -75,7 +75,7 @@ class Router
         }
 
         // No route matched
-        return Response::html('Page not found.', 404);
+        return Response::html(__('err_page_not_found'), 404);
     }
 
     /**

@@ -60,12 +60,12 @@
 
       <div class="form-group">
         <label for="r2_account_id"><?= __('r2_account_id') ?></label>
-        <input type="text" name="r2_account_id" id="r2_account_id" placeholder="Account ID" value="<?= htmlspecialchars($config['accountId'] ?? '') ?>" required>
+        <input type="text" name="r2_account_id" id="r2_account_id" placeholder="<?= htmlspecialchars(__('custom_account_id')) ?>" value="<?= htmlspecialchars($config['accountId'] ?? '') ?>" required>
       </div>
 
       <div class="form-group">
         <label for="r2_access_key_id"><?= __('r2_access_key_id') ?></label>
-        <input type="text" name="r2_access_key_id" id="r2_access_key_id" placeholder="Access Key ID" value="<?= htmlspecialchars($config['accessKeyId'] ?? '') ?>" required>
+        <input type="text" name="r2_access_key_id" id="r2_access_key_id" placeholder="<?= htmlspecialchars(__('custom_access_key')) ?>" value="<?= htmlspecialchars($config['accessKeyId'] ?? '') ?>" required>
       </div>
 
       <div class="form-group">

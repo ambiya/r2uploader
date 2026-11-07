@@ -4,6 +4,16 @@
 (function () {
     'use strict';
 
+    // Client-side translation helper
+    window.__t = function (key, params = {}) {
+        const dict = window.R2_I18N || {};
+        let text = dict[key] || key;
+        Object.keys(params).forEach(k => {
+            text = text.replaceAll(':' + k, String(params[k]));
+        });
+        return text;
+    };
+
     // Theme toggle
     window.toggleTheme = function () {
         const current = document.documentElement.getAttribute('data-theme');
@@ -25,7 +35,10 @@
             ? '<svg style="width:1.25rem;height:1.25rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>'
             : '<svg style="width:1.25rem;height:1.25rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
 
-        toast.innerHTML = `${icon} <span>${message}</span>`;
+        toast.innerHTML = icon + ' ';
+        const span = document.createElement('span');
+        span.textContent = message;
+        toast.appendChild(span);
         container.appendChild(toast);
 
         // Show popover container if not already open
@@ -54,7 +67,7 @@
     // Copy to clipboard
     window.copyToClipboard = function (text) {
         navigator.clipboard.writeText(text).then(() => {
-            showToast('Link copied to clipboard!');
+            showToast(window.__t('msg_link_copied'));
         }).catch(err => {
             console.error('Failed to copy: ', err);
         });

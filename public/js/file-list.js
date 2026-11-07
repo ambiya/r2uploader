@@ -4,6 +4,8 @@
 (function() {
     'use strict';
 
+    const t = (key, params) => (window.__t ? window.__t(key, params) : key);
+
     // Rename file via native dialog
     window.renameFile = function(oldKey, type) {
         const modal = document.getElementById('rename-modal');
@@ -31,7 +33,8 @@
 
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<svg style="width:1.1rem;height:1.1rem; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Syncing...`;
+        btn.innerHTML = `<svg style="width:1.1rem;height:1.1rem; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> `;
+        btn.appendChild(document.createTextNode(t('status_syncing')));
 
         const urlParams = new URLSearchParams(window.location.search);
         const type = urlParams.get('type') || '';
@@ -49,13 +52,17 @@
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Sync failed: ' + (data.error || 'An error occurred'));
+                const msg = t('err_sync_failed') + (data.error || '');
+                if (window.showToast) window.showToast(msg, 'error');
+                else alert(msg);
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
             }
         })
         .catch(err => {
-            alert('Sync failed: ' + err.message);
+            const msg = t('err_sync_failed') + err.message;
+            if (window.showToast) window.showToast(msg, 'error');
+            else alert(msg);
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         });
@@ -181,18 +188,18 @@
               <td><span class="badge" style="background-color:var(--bg-app); border:1px solid var(--border); color:var(--text-muted);">${escapeHtml(obj.SizeMB)} MB</span></td>
               <td>
                 <div class="actions-cell" style="justify-content:flex-end;">
-                  <button class="btn btn-secondary" onclick="copyToClipboard('${escapeJs(fileUrl)}')" style="padding:0.4rem 0.65rem;" title="Copy URL">
+                  <button class="btn btn-secondary" onclick="copyToClipboard('${escapeJs(fileUrl)}')" style="padding:0.4rem 0.65rem;" title="${escapeHtml(t('btn_copy_url_short'))}">
                     <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                   </button>
-                  <a href="${escapeHtml(fileUrl)}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.65rem;" title="Download">
+                  <a href="${escapeHtml(fileUrl)}" target="_blank" class="btn btn-secondary" style="padding:0.4rem 0.65rem;" title="${escapeHtml(t('btn_download'))}">
                     <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   </a>
-                  <button class="btn btn-warning" onclick="renameFile('${escapeJs(obj.Key)}','${escapeJs(type)}')" style="padding:0.4rem 0.65rem;" title="Rename">
+                  <button class="btn btn-warning" onclick="renameFile('${escapeJs(obj.Key)}','${escapeJs(type)}')" style="padding:0.4rem 0.65rem;" title="${escapeHtml(t('btn_rename'))}">
                     <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
                   <form method="POST" action="/?action=delete&type=${encodeURIComponent(type)}&key=${encodeURIComponent(obj.Key)}" class="ajax-delete-form" data-key="${escapeHtml(obj.Key)}" style="display:inline;">
                     <input type="hidden" name="csrf_token" value="${escapeHtml(window._csrfToken || '')}">
-                    <button type="submit" class="btn btn-danger" style="padding:0.4rem 0.65rem;" title="Delete">
+                    <button type="submit" class="btn btn-danger" style="padding:0.4rem 0.65rem;" title="${escapeHtml(t('title_delete'))}">
                       <svg style="width:1rem;height:1rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                   </form>
@@ -302,7 +309,7 @@
                     // Pagination state
                     if (data.objects.length > 0 || data.prefixes.length > 0 || currentPageIndex > 0) {
                         paginationBar.style.display = 'flex';
-                        pageIndicator.textContent = `Page ${currentPageIndex + 1}`;
+                        pageIndicator.textContent = `${t('page_label')} ${currentPageIndex + 1}`;
                         
                         btnPrev.disabled = currentPageIndex === 0;
                         btnNext.disabled = !data.isTruncated;
@@ -312,7 +319,7 @@
                 })
                 .catch(err => {
                     spinner.style.display = 'none';
-                    searchEmptyState.textContent = 'Failed to load data.';
+                    searchEmptyState.textContent = t('err_load_data');
                     searchEmptyState.style.display = 'block';
                     console.error(err);
                 });
@@ -448,9 +455,7 @@
             btnBulkDelete.addEventListener('click', function() {
                 if (selectedFiles.size === 0) return;
                 
-                const confirmMsg = document.documentElement.lang === 'id' 
-                    ? `Apakah Anda yakin ingin menghapus ${selectedFiles.size} file terpilih?` 
-                    : `Are you sure you want to delete ${selectedFiles.size} selected file(s)?`;
+                const confirmMsg = t('confirm_bulk_delete', { count: selectedFiles.size });
                 
                 const modal = document.getElementById('delete-modal');
                 if (modal) {
@@ -497,15 +502,15 @@
                         
                         selectedFiles.clear();
                         if (selectAllCheckbox) selectAllCheckbox.checked = false;
-                        if (window.showToast) window.showToast(data.message || 'Files deleted', 'success');
+                        if (window.showToast) window.showToast(data.message || t('msg_files_deleted'), 'success');
                     } else {
-                        if (window.showToast) window.showToast(data.error || 'Failed to delete files', 'error');
-                        else alert(data.error || 'Failed to delete files');
+                        if (window.showToast) window.showToast(data.error || t('err_network_delete'), 'error');
+                        else alert(data.error || t('err_network_delete'));
                     }
                 })
                 .catch(err => {
-                    if (window.showToast) window.showToast('Network error while deleting', 'error');
-                    else alert('Network error while deleting');
+                    if (window.showToast) window.showToast(t('err_network_delete'), 'error');
+                    else alert(t('err_network_delete'));
                 })
                 .finally(() => {
                     btn.innerHTML = originalContent;
@@ -566,9 +571,7 @@
                     const originalContent = btn.innerHTML;
                     
                     const fileName = key.split('/').pop();
-                    const confirmMsg = document.documentElement.lang === 'id'
-                        ? `Hapus file "${fileName}"?`
-                        : `Delete file "${fileName}"?`;
+                    const confirmMsg = t('confirm_delete_file', { file: fileName });
                         
                     const modal = document.getElementById('delete-modal');
                     if (modal) {
@@ -599,17 +602,17 @@
                                 selectedFiles.delete(key);
                                 updateBulkActionsBar();
                             }
-                            if (window.showToast) window.showToast(data.message || 'File deleted', 'success');
+                            if (window.showToast) window.showToast(data.message || t('msg_file_deleted'), 'success');
                         } else {
-                            if (window.showToast) window.showToast(data.error || 'Failed to delete file', 'error');
-                            else alert(data.error || 'Failed to delete file');
+                            if (window.showToast) window.showToast(data.error || t('err_network_delete'), 'error');
+                            else alert(data.error || t('err_network_delete'));
                             btn.innerHTML = originalContent;
                             btn.disabled = false;
                         }
                     })
                     .catch(err => {
-                        if (window.showToast) window.showToast('Network error while deleting', 'error');
-                        else alert('Network error while deleting');
+                        if (window.showToast) window.showToast(t('err_network_delete'), 'error');
+                        else alert(t('err_network_delete'));
                         btn.innerHTML = originalContent;
                         btn.disabled = false;
                     });

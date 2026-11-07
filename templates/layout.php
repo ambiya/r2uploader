@@ -85,6 +85,32 @@
 
   <div id="toast-container" popover="manual"></div>
 
+  <script>
+    window.R2_I18N = <?= json_encode([
+        'msg_link_copied'      => __('msg_link_copied'),
+        'btn_upload_url'       => __('btn_upload_url'),
+        'btn_upload_device'    => __('btn_upload_device'),
+        'status_uploading'     => __('status_uploading'),
+        'status_downloading'   => __('status_downloading'),
+        'status_starting'      => __('status_starting'),
+        'upload_wait_helper'   => __('upload_wait_helper'),
+        'upload_success_title' => __('upload_success_title'),
+        'err_network'          => __('err_network'),
+        'err_network_delete'   => __('err_network_delete'),
+        'err_load_data'        => __('err_load_data'),
+        'err_sync_failed'      => __('err_sync_failed'),
+        'status_syncing'       => __('status_syncing'),
+        'page_label'           => __('page_label'),
+        'btn_copy_url_short'   => __('btn_copy_url_short'),
+        'btn_download'         => __('btn_download'),
+        'btn_rename'           => __('btn_rename'),
+        'title_delete'         => __('title_delete'),
+        'confirm_delete_file'  => __('confirm_delete_file'),
+        'confirm_bulk_delete'  => __('confirm_bulk_delete'),
+        'msg_file_deleted'     => __('msg_file_deleted'),
+        'msg_files_deleted'    => __('msg_files_deleted'),
+    ], JSON_UNESCAPED_UNICODE) ?>;
+  </script>
   <script src="/js/app.js"></script>
   <?php if (!empty($extraJs)): ?>
     <?php foreach ($extraJs as $js): ?>

@@ -148,7 +148,15 @@ class UploadController extends BaseController
                 $folder
             );
 
-            // Render success
+            if ($request->isAjax()) {
+                return Response::json([
+                    'success' => true,
+                    'title'   => __('upload_success_title'),
+                    'html'    => $this->render('success', $viewData),
+                ]);
+            }
+
+            // Render success page for non-AJAX fallback
             return $this->renderPage(__('upload_success_title'), 'success', $viewData, $this->csrf->getToken());
 
         } catch (\Exception $e) {

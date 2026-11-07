@@ -72,10 +72,10 @@
       <?php endif; ?>
     </div>
 
-    <button id="submit-btn" type="submit" class="btn btn-primary btn-submit"<?= !$isConfigured ? ' disabled title="' . __('tooltip_env_incomplete') . '"' : '' ?>>
+    <button id="submit-btn" type="submit" class="btn btn-primary btn-submit"<?= !$isConfigured ? ' disabled title="' . htmlspecialchars(__('tooltip_env_incomplete')) . '"' : '' ?>>
       <svg style="width:1.15rem;height:1.15rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
       <span id="submit-spinner" class="spinner" style="display:none;"></span>
-      <span id="submit-btn-text"><?= __('btn_upload_file') ?></span>
+      <span id="submit-btn-text"><?= __('btn_upload_url') ?></span>
     </button>
     <p id="submit-helper" style="display:none; margin-top:0.75rem; font-size:0.85rem; color:var(--text-muted); text-align:center;"></p>
     

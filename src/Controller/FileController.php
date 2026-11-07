@@ -252,7 +252,7 @@ class FileController extends BaseController
             return Response::json([
                 'success' => true,
                 'csrfToken' => $this->csrf->getToken(),
-                'message' => 'File deleted successfully'
+                'message' => __('msg_file_deleted')
             ]);
         }
 
@@ -349,7 +349,7 @@ class FileController extends BaseController
             return Response::json([
                 'success' => true,
                 'csrfToken' => $this->csrf->getToken(),
-                'message' => 'Files deleted successfully'
+                'message' => __('msg_files_deleted')
             ]);
         }
 

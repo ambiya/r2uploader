@@ -54,7 +54,7 @@ class FileController extends BaseController
                 }));
             }
             
-            $this->sortObjects($allObjects, $sort, $order);
+            $this->sortObjects($allObjects, $sort, $order, $flat);
             
             $offset = ($page - 1) * $limit;
             $sliced = array_slice($allObjects, $offset, $limit);
@@ -67,7 +67,7 @@ class FileController extends BaseController
             ];
         } else {
             $allLevel = $this->fileIndex->listDirectory($bucketName, $prefix);
-            $this->sortObjects($allLevel['objects'], $sort, $order);
+            $this->sortObjects($allLevel['objects'], $sort, $order, false);
             
             $offset = ($page - 1) * $limit;
             $slicedObjects = array_slice($allLevel['objects'], $offset, $limit);
@@ -82,9 +82,9 @@ class FileController extends BaseController
         }
     }
 
-    private function sortObjects(array &$objects, string $sort, string $order): void
+    private function sortObjects(array &$objects, string $sort, string $order, bool $flat = false): void
     {
-        usort($objects, function($a, $b) use ($sort, $order) {
+        usort($objects, function($a, $b) use ($sort, $order, $flat) {
             if ($sort === 'date') {
                 $valA = isset($a['LastModified']) ? $a['LastModified']->getTimestamp() : 0;
                 $valB = isset($b['LastModified']) ? $b['LastModified']->getTimestamp() : 0;
@@ -92,8 +92,10 @@ class FileController extends BaseController
                 $valA = $a['Size'] ?? 0;
                 $valB = $b['Size'] ?? 0;
             } else {
-                $valA = strtolower($a['Key']);
-                $valB = strtolower($b['Key']);
+                $nameA = $flat ? basename($a['Key']) : $a['Key'];
+                $nameB = $flat ? basename($b['Key']) : $b['Key'];
+                $valA = strtolower($nameA);
+                $valB = strtolower($nameB);
                 if ($order === 'asc') return strcmp($valA, $valB);
                 if ($order === 'desc') return strcmp($valB, $valA);
             }
